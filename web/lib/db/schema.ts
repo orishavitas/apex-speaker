@@ -1,6 +1,6 @@
 import {
   pgTable, text, varchar, timestamp, uuid, real, integer,
-  boolean, jsonb, customType, index, pgEnum
+  boolean, jsonb, customType, index, uniqueIndex, pgEnum
 } from "drizzle-orm/pg-core";
 
 // pgvector custom type (not natively exported from drizzle-orm/pg-core)
@@ -77,6 +77,7 @@ export const knowledgeChunks = pgTable("knowledge_chunks", {
 }, (table) => ({
   domainIdx: index("knowledge_domain_idx").on(table.agentDomain),
   statusIdx: index("knowledge_status_idx").on(table.status),
+  sourceChunkIdx: uniqueIndex("knowledge_source_chunk_idx").on(table.sourcePath, table.chunkIndex),
   // HNSW index created post-push via: CREATE INDEX ON knowledge_chunks USING hnsw (embedding vector_cosine_ops);
 }));
 
