@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* APEX dark theme — engineering instrument aesthetic */
+  --background: 0 0% 4%;
+  --foreground: 0 0% 90%;
+  --card: 0 0% 6%;
+  --card-foreground: 0 0% 90%;
+  --popover: 0 0% 6%;
+  --popover-foreground: 0 0% 90%;
+  --primary: 213 89% 64%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 0 0% 70%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 213 89% 64%;
+  --accent-foreground: 0 0% 4%;
+  --destructive: 0 84% 60%;
+  --border: 0 0% 12%;
+  --input: 0 0% 12%;
+  --ring: 213 89% 64%;
+  --radius: 0.5rem;
+
+  /* Agent domain colors */
+  --agent-acoustics: 213 89% 64%;
+  --agent-enclosure: 142 71% 45%;
+  --agent-crossover: 38 92% 50%;
+  --agent-theory: 271 91% 65%;
+  --agent-mechanical: 215 14% 55%;
+  --agent-research: 188 86% 53%;
+  --agent-manager: 0 0% 90%;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+}
+
+code, .mono {
+  font-family: var(--font-mono);
+}

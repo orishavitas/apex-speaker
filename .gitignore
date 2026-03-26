@@ -1,0 +1,12 @@
+# Next.js
+web/.next/
+web/node_modules/
+web/.env.local
+web/.env*.local
+
+# Superpowers
+.superpowers/
+
+# OS
+.DS_Store
+Thumbs.db
