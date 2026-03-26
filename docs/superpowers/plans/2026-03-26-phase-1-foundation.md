@@ -280,12 +280,11 @@ export function AgentBadge({ domain, size = "md", showLabel = true, className }:
 }
 ```
 
-- [ ] **Step 2: Create components barrel export**
+- [ ] **Step 2: Create components barrel export (AgentBadge only — Sidebar added in Task 5)**
 
 Create `web/components/index.ts`:
 ```typescript
 export { AgentBadge, type AgentDomain } from "./apex/agent-badge";
-export { Sidebar } from "./apex/sidebar";
 ```
 
 - [ ] **Step 3: Commit**
@@ -629,6 +628,13 @@ export async function GET() {
 npm run dev
 ```
 Open http://localhost:3000 — should redirect to /dashboard. Dark zinc background. APEX sidebar. Agent badges visible.
+
+- [ ] **Step 5b: Add Sidebar to barrel export**
+
+Append to `web/components/index.ts`:
+```typescript
+export { Sidebar } from "./apex/sidebar";
+```
 
 - [ ] **Step 6: Commit**
 

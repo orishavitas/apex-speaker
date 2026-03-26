@@ -116,3 +116,13 @@ Every completed phase produces a process doc in `docs/process/`:
 - `phase-5-deployment.md`
 
 Format: what was built, thought process, implementation decisions, how to extend it.
+
+---
+
+## External Resources
+
+### NotebookLM — Speaker Building Knowledge Base
+**URL:** https://notebooklm.google.com/notebook/59cf7942-cf9f-459e-9b3c-46b0702f026c
+**Purpose:** Aggregated speaker design knowledge — books, conversations, research papers
+**Used by:** Research Agent (Phase 3) for knowledge synthesis and citation
+**Access:** Ori Shavit (ori@compulocks.com)
