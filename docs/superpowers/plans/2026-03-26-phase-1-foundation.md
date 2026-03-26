@@ -70,7 +70,8 @@ npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir=
 
 ```bash
 cd web
-npm install drizzle-orm @neondatabase/serverless drizzle-kit
+npm install drizzle-orm@^0.31.0 @neondatabase/serverless
+npm install -D drizzle-kit
 npm install ai @ai-sdk/react @ai-sdk/gateway
 npm install geist
 npm install dotenv
@@ -104,9 +105,9 @@ git commit -m "feat: scaffold Next.js 16 app with core dependencies"
 
 ```bash
 cd web
-npx shadcn@latest init --yes --defaults
+npx shadcn@latest init
 ```
-When prompted: select Dark theme, zinc base color, yes to CSS variables.
+When prompted: select **Dark** style, **zinc** base color, **yes** to CSS variables. The `--defaults` flag bypasses these prompts — do NOT use it here.
 
 - [ ] **Step 2: Add core shadcn components**
 
@@ -279,10 +280,12 @@ export function AgentBadge({ domain, size = "md", showLabel = true, className }:
 }
 ```
 
-- [ ] **Step 2: Export from components index**
+- [ ] **Step 2: Create components barrel export**
 
-```bash
-echo 'export { AgentBadge } from "./apex/agent-badge";' >> web/components/index.ts
+Create `web/components/index.ts`:
+```typescript
+export { AgentBadge, type AgentDomain } from "./apex/agent-badge";
+export { Sidebar } from "./apex/sidebar";
 ```
 
 - [ ] **Step 3: Commit**
@@ -302,14 +305,30 @@ git commit -m "feat: AgentBadge component with domain color system"
 - Create: `web/lib/db/index.ts`
 - Create: `web/drizzle.config.ts`
 
+- [ ] **Step 0: Set DATABASE_URL before running any DB commands**
+
+Create `web/.env.local` with your Neon connection string (get from Neon dashboard):
+```
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+```
+Do NOT commit this file — it is in .gitignore.
+
 - [ ] **Step 1: Create Drizzle schema**
 
 ```typescript
 // web/lib/db/schema.ts
 import {
   pgTable, text, varchar, timestamp, uuid, real, integer,
-  boolean, jsonb, vector, index, pgEnum
+  boolean, jsonb, customType, index, pgEnum
 } from "drizzle-orm/pg-core";
+
+// pgvector custom type (vector not exported from drizzle-orm/pg-core natively)
+const vector = customType<{ data: number[]; config: { dimensions: number } }>({
+  dataType(config) {
+    return `vector(${config?.dimensions ?? 1536})`;
+  },
+});
+
 
 // Enums
 export const agentDomainEnum = pgEnum("agent_domain", [
@@ -363,11 +382,23 @@ export const knowledgeChunks = pgTable("knowledge_chunks", {
   chunkIndex: integer("chunk_index").default(0),
   parentId: uuid("parent_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => ({
-  embeddingIdx: index("knowledge_embedding_idx").using("hnsw", table.embedding.op("vector_cosine_ops")),
-  domainIdx: index("knowledge_domain_idx").on(table.agentDomain),
-  statusIdx: index("knowledge_status_idx").on(table.status),
-}));
+}, (table) => [
+  index("knowledge_domain_idx").on(table.agentDomain),
+  index("knowledge_status_idx").on(table.status),
+  // HNSW index created separately via raw SQL migration after push (pgvector requirement)
+]);
+
+// Agents — identity, config, and status per domain
+export const agents = pgTable("agents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  domain: agentDomainEnum("domain").notNull().unique(),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  systemPrompt: text("system_prompt"),
+  isActive: boolean("is_active").default(true),
+  knowledgeChunkCount: integer("knowledge_chunk_count").default(0),
+  lastActiveAt: timestamp("last_active_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // Agent memory — private scratchpad per agent per project
 export const agentMemory = pgTable("agent_memory", {
@@ -399,12 +430,13 @@ export const sources = pgTable("sources", {
 
 ```typescript
 // web/lib/db/index.ts
-import { drizzle } from "drizzle-orm/neon-serverless";
+// Uses neon-http adapter (HTTP fetch-based, pairs with neon() function)
+import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "./schema";
 
 const sql = neon(process.env.DATABASE_URL!);
-export const db = drizzle({ client: sql, schema });
+export const db = drizzle(sql, { schema });
 export * from "./schema";
 ```
 
@@ -426,12 +458,47 @@ export default {
 } satisfies Config;
 ```
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Enable pgvector extension and push schema to Neon**
+
+```bash
+cd web
+# Enable pgvector extension on Neon (run once)
+# Open Neon dashboard SQL editor and run: CREATE EXTENSION IF NOT EXISTS vector;
+# Then push the schema:
+npx drizzle-kit push
+```
+Expected: Drizzle prints all 6 tables created (projects, conversations, knowledge_chunks, agent_memory, agents, sources). No errors.
+
+- [ ] **Step 5: Seed agents table with domain roster**
+
+```bash
+# Run this seed script once after push:
+node -e "
+const { neon } = require('@neondatabase/serverless');
+require('dotenv').config({ path: '.env.local' });
+const sql = neon(process.env.DATABASE_URL);
+const agents = [
+  { domain: 'manager',    display_name: 'Project Manager', system_prompt: 'You coordinate all specialist agents and guide the user through speaker design.' },
+  { domain: 'acoustics',  display_name: 'Acoustics Agent', system_prompt: 'You are an expert in electroacoustics, SPL, frequency response, and directivity.' },
+  { domain: 'enclosure',  display_name: 'Enclosure Agent', system_prompt: 'You specialize in cabinet design: ported, sealed, isobaric, passive radiator, transmission line.' },
+  { domain: 'crossover',  display_name: 'Crossover Agent', system_prompt: 'You design crossover networks: topology, component values, phase alignment.' },
+  { domain: 'theory',     display_name: 'Theory Agent',    system_prompt: 'You handle Thiele-Small parameters, physics, and mathematical modeling.' },
+  { domain: 'mechanical', display_name: 'Mechanical Agent',system_prompt: 'You advise on materials, bracing, damping, CNC, and 3D printing.' },
+  { domain: 'research',   display_name: 'Research Agent',  system_prompt: 'You search forums, papers, and datasheets to find relevant technical information.' },
+];
+Promise.all(agents.map(a => sql\`INSERT INTO agents (domain, display_name, system_prompt) VALUES (\${a.domain}, \${a.display_name}, \${a.system_prompt}) ON CONFLICT (domain) DO NOTHING\`))
+  .then(() => { console.log('Agents seeded'); process.exit(0); })
+  .catch(e => { console.error(e); process.exit(1); });
+"
+```
+Expected: "Agents seeded"
+
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /c/Users/OriShavit/documents/github/apex-speaker
 git add web/lib/ web/drizzle.config.ts
-git commit -m "feat: Drizzle schema — projects, conversations, knowledge_chunks, agent_memory, sources"
+git commit -m "feat: Drizzle schema — projects, conversations, knowledge_chunks, agent_memory, agents, sources + migration"
 ```
 
 ---
