@@ -26,6 +26,9 @@ export function Sidebar() {
         <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 rounded text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm transition-colors">
           <span className="font-mono text-zinc-500">◈</span> Dashboard
         </Link>
+        <Link href="/dashboard/chat" className="flex items-center gap-2 px-3 py-2 rounded text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm transition-colors">
+          <span className="font-mono text-zinc-500">⬡</span> Chat
+        </Link>
         <Link href="/knowledge" className="flex items-center gap-2 px-3 py-2 rounded text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm transition-colors">
           <span className="font-mono text-zinc-500">⊕</span> Knowledge Base
         </Link>
@@ -54,7 +57,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-zinc-800 text-xs font-mono text-zinc-600">
-        v0.1.0 — Phase 1
+        v0.4.0 — Phase 4
       </div>
     </aside>
   );
