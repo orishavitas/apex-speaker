@@ -11,10 +11,12 @@ import type { AgentDomain, AgentChatRequest, ChatMessage } from "@/lib/agents/ty
 
 // Keyword-based domain classifier (Phase 4 upgrades to LLM-based routing)
 const DOMAIN_KEYWORDS: Record<Exclude<AgentDomain, "manager">, string[]> = {
+  // vituixcad is listed first so it wins ties when keywords overlap (e.g. "group delay" in a sim context)
+  vituixcad: ["vituixcad", "vituixCAD", "simulation file", "vxp", "vxd", "vxb", "crossover simulation", "loaded project", "parsed project", "simulation data", "port velocity", "group delay", "baffle step"],
   acoustics: ["frequency", "spl", "sensitivity", "waveguide", "horn", "directivity", "dispersion", "thiele", "small", "fs", "qts", "vas", "xmax", "response", "polar", "cardioid"],
   enclosure: ["box", "volume", "port", "ported", "sealed", "isobaric", "passive radiator", "pr", "net volume", "liters", "tuning", "enclosure", "cabinet", "alignment", "winisd"],
-  crossover: ["crossover", "filter", "linkwitz", "butterworth", "capacitor", "inductor", "zobel", "notch", "baffle step", "dsp", "minidsp", "active filter", "slope"],
-  theory: ["equation", "impedance", "circuit", "analog", "beranek", "physics", "math", "derivation", "schroeder", "room mode", "standing wave", "fft", "group delay"],
+  crossover: ["crossover", "filter", "linkwitz", "butterworth", "capacitor", "inductor", "zobel", "notch", "dsp", "minidsp", "active filter", "slope"],
+  theory: ["equation", "impedance", "circuit", "analog", "beranek", "physics", "math", "derivation", "schroeder", "room mode", "standing wave", "fft"],
   mechanical: ["material", "mdf", "plywood", "joint", "cnc", "solidworks", "3d print", "brace", "damping", "foam", "bitumen", "veneer", "finish", "construction"],
   research: ["recommend", "driver", "find", "which", "best", "compare", "forum", "diyaudio", "parts express", "scanspeak", "seas", "amplifier", "notebooklm"],
 };
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result = streamText({
-    model: "anthropic/claude-sonnet-4-6",
+    model: "anthropic/claude-sonnet-4.6",
     system: systemPrompt,
     messages: messages.map((m: ChatMessage) => ({
       role: m.role,
