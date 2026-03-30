@@ -26,9 +26,17 @@ User Browser
         → agent_memory table (per-project scratchpad)
 ```
 
-**7 agents:** manager · acoustics · enclosure · crossover · theory · mechanical · research
+**8 agents:** manager · acoustics · enclosure · crossover · theory · mechanical · research · vituixcad
 
 **Stack:** Next.js 16 · AI SDK v6 · Drizzle ORM · Neon PostgreSQL · pgvector · Vercel AI Gateway · shadcn/ui (zinc dark)
+
+**VituixCAD integration (Sprint 1 — feature/vituixcad-sprint-1 branch):**
+- `web/lib/parser/` — fast-xml-parser based .vxp/.vxd/.vxb parser
+- `web/lib/types/speaker-domain.ts` — canonical domain model (SpeakerConfig, Way, LoadingConfig discriminated union)
+- `web/lib/types/speaker-math.ts` — Phase B math stubs (calcSealedBox, calcPortedBox, calcHornLoading)
+- 3 new DB tables: vituixcad_projects, driver_database, design_state
+- 4 new routes: /dashboard/projects, /dashboard/drivers, /dashboard/workspace, /dashboard/projects/[id]
+- 5 new API routes: /api/upload, /api/projects, /api/projects/[id], /api/design-state, /api/drivers
 
 ---
 
@@ -41,6 +49,7 @@ User Browser
 | Phase 3 — Agent Architecture (7 agents, routing, memory) | ✅ Complete |
 | Phase 4 — UI Dashboard (chat, streaming, domain badges) | ✅ Complete |
 | Phase 5 — Vercel Deployment | ⏳ Pending (awaiting user to run deploy steps) |
+| Sprint 1 — VituixCAD Integration | ✅ Built (branch: feature/vituixcad-sprint-1, needs merge + DB migration) |
 
 All phases merged into `master`. App runs locally: `cd web && npm run dev` → http://localhost:3000
 
@@ -63,18 +72,39 @@ Short version:
 
 ## Key Files
 
+### Core (Phases 1–4)
+
 | Path | What It Does |
 |------|-------------|
 | `web/app/dashboard/chat/page.tsx` | Main chat UI (AI SDK v6 Chat + DefaultChatTransport) |
 | `web/app/api/agents/manager/route.ts` | Keyword routing → picks specialist domain |
 | `web/app/api/agents/[domain]/route.ts` | Specialist agents with RAG + memory |
 | `web/lib/db/index.ts` | Lazy Neon proxy — defers connection to first request |
-| `web/lib/db/schema.ts` | 6 tables: agents, projects, knowledge_chunks, sources, agent_memory, conversations |
-| `web/lib/agents/system-prompts.ts` | Deep domain prompts for all 7 agents |
+| `web/lib/db/schema.ts` | 9 tables: agents, projects, knowledge_chunks, sources, agent_memory, conversations, vituixcad_projects, driver_database, design_state |
+| `web/lib/agents/system-prompts.ts` | Deep domain prompts for all 8 agents |
 | `web/lib/agents/rag-context.ts` | pgvector cosine search, formatted for injection |
 | `web/scripts/ingest-conversations.ts` | `npm run ingest` — embeds 23 conversation files |
 | `web/scripts/register-notebooklm.ts` | `npm run register-notebooklm` — registers NLM source |
 | `docs/process/phase-5-deployment.md` | Full deployment reference with env vars table |
+
+### Sprint 1 — VituixCAD Integration
+
+| Path | What It Does |
+|------|-------------|
+| `web/lib/parser/vituixcad-parser.ts` | fast-xml-parser v4 — parses .vxp/.vxd/.vxb files, handles single-element isArray edge case |
+| `web/lib/parser/ts-param-mapper.ts` | Maps VituixCAD native names (Re, fs, BL) → canonical unit-suffixed names (Re_ohms, fs_hz, BL_Tm) |
+| `web/lib/types/speaker-domain.ts` | Canonical domain model: ThieleSmallParams, LoadingConfig discriminated union, SpeakerConfig, DesignState, WaySlot |
+| `web/lib/types/speaker-math.ts` | Math stubs: calcSealedBox, calcPortedBox, calcHornLoading — implemented in Sprint 2 |
+| `web/app/api/upload/route.ts` | POST — accepts .vxp/.vxd/.vxb, parses, stores in vituixcad_projects |
+| `web/app/api/projects/route.ts` | GET — lists all VituixCAD projects |
+| `web/app/api/projects/[id]/route.ts` | GET — single project with full parsed data |
+| `web/app/api/design-state/route.ts` | GET + PATCH — workspace design state persistence |
+| `web/app/api/drivers/route.ts` | GET — driver database listing |
+| `web/app/dashboard/projects/page.tsx` | Project list with drag-drop upload, 5-state UX |
+| `web/app/dashboard/projects/[id]/page.tsx` | Single project JSON viewer |
+| `web/app/dashboard/drivers/page.tsx` | Dense sortable driver database table |
+| `web/app/dashboard/workspace/page.tsx` | 3-column CSS Grid: config panel / driver slots / chat |
+| `web/components/apex/top-nav.tsx` | Top navigation bar (Projects, Drivers, Workspace, Chat) with active route detection |
 
 ---
 
