@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { designState } from '@/lib/db/schema';
+import { designState, projects } from '@/lib/db/schema';
 import { defaultDesignState } from '@/lib/types/speaker-domain';
+import { WORKSPACE_PROJECT_NAME } from '@/lib/constants/workspace';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -45,6 +46,9 @@ export async function GET(req: NextRequest) {
         .limit(1);
 
       if (rows.length === 0) {
+        // Ensure the parent projects row exists before inserting design_state
+        await db.insert(projects).values({ id: projectId, name: WORKSPACE_PROJECT_NAME }).onConflictDoNothing();
+
         // Auto-create default state
         const defaults = defaultDesignState(projectId);
         const [created] = await db
