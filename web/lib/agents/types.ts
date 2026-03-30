@@ -5,7 +5,8 @@ export type AgentDomain =
   | "theory"
   | "mechanical"
   | "research"
-  | "manager";
+  | "manager"
+  | "vituixcad";
 
 export interface ChatMessage {
   role: "user" | "assistant";

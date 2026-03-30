@@ -17,11 +17,12 @@ const AGENT_DISPLAY_NAMES: Record<AgentDomain, string> = {
   theory: "Theory Specialist",
   mechanical: "Mechanical Specialist",
   research: "Research Specialist",
+  vituixcad: "VituixCAD Specialist",
 };
 
 const DOMAINS: AgentDomain[] = [
   "manager", "acoustics", "enclosure", "crossover",
-  "theory", "mechanical", "research",
+  "theory", "mechanical", "research", "vituixcad",
 ];
 
 export async function POST() {
