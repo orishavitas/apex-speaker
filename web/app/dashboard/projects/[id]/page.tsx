@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { LoadIntoWorkspaceButton } from '@/components/apex/load-into-workspace-button';
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -56,12 +57,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       </div>
 
       <div className="mt-4">
-        <a
-          href="/dashboard/workspace"
-          className="inline-flex items-center gap-2 font-mono text-sm text-violet-400 hover:text-violet-300"
-        >
-          load into workspace →
-        </a>
+        <LoadIntoWorkspaceButton vxProjectId={String(project.id)} />
       </div>
     </div>
   );
