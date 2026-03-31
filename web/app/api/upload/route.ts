@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseVxFile, ParseError, detectVxFileType } from '@/lib/parser';
 import { db } from '@/lib/db';
-import { vituixcadProjects } from '@/lib/db/schema';
+import { vituixcadProjects, driverDatabase } from '@/lib/db/schema';
 import { createHash } from 'crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import type { VxdRaw, VxdDriverRaw } from '@/lib/parser/vituixcad-native';
+import { vxdDriverToInsert } from '@/lib/mappers/vxd-to-driver-insert';
 
 export const config = {
   api: { bodyParser: { sizeLimit: '10mb' } },
@@ -72,12 +74,51 @@ export async function POST(req: NextRequest) {
         })
         .returning({ id: vituixcadProjects.id });
 
+      // .vxd: extract and upsert drivers into driver_database
+      let driversImported = 0;
+      if (fileType === 'vxd') {
+        const vxd = parsedData as VxdRaw;
+        const drivers: VxdDriverRaw[] = vxd?.VITUIXCAD?.DATABASE?.DRIVER ?? [];
+        if (drivers.length > 0) {
+          const inserts = drivers.map(vxdDriverToInsert);
+          await db
+            .insert(driverDatabase)
+            .values(inserts)
+            .onConflictDoUpdate({
+              target: [driverDatabase.manufacturer, driverDatabase.model],
+              set: {
+                driverType:      sql`excluded.driver_type`,
+                reOhm:           sql`excluded.re_ohm`,
+                leMh:            sql`excluded.le_mh`,
+                bl:              sql`excluded.bl`,
+                fsHz:            sql`excluded.fs_hz`,
+                qts:             sql`excluded.qts`,
+                qes:             sql`excluded.qes`,
+                qms:             sql`excluded.qms`,
+                vasLiters:       sql`excluded.vas_liters`,
+                mmsGrams:        sql`excluded.mms_grams`,
+                cmsMmPerN:       sql`excluded.cms_mm_per_n`,
+                rmsKgS:          sql`excluded.rms_kg_s`,
+                sdCm2:           sql`excluded.sd_cm2`,
+                xmaxMm:          sql`excluded.xmax_mm`,
+                sensitivity1m1w: sql`excluded.sensitivity_1m1w`,
+                powerWatts:      sql`excluded.power_watts`,
+                source:          sql`excluded.source`,
+                rawData:         sql`excluded.raw_data`,
+                updatedAt:       new Date(),
+              },
+            });
+          driversImported = drivers.length;
+        }
+      }
+
       return NextResponse.json({
         success: true,
         persisted: true,
         id: inserted.id,
         fileType,
         fileName: filename,
+        ...(fileType === 'vxd' ? { driversImported } : {}),
       });
     } catch (e) {
       if (isNoDatabaseError(e)) {

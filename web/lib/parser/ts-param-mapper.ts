@@ -33,7 +33,9 @@ export function mapThieleSmall(params: VxdParamRaw[]): Partial<ThieleSmallParams
   for (const param of params) {
     const canonical = PARAM_MAP[param._n];
     if (canonical !== undefined) {
-      (result as Record<string, number>)[canonical] = Number(param._v);
+      const n = Number(param._v);
+      if (isNaN(n)) continue;
+      (result as Record<string, number>)[canonical] = n;
     }
   }
   return result;
