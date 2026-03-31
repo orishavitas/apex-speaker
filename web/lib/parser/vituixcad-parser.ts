@@ -43,6 +43,12 @@ export function parseVxd(xml: string): VxdRaw {
   if (raw.VITUIXCAD.DATABASE.DRIVER && !Array.isArray(raw.VITUIXCAD.DATABASE.DRIVER)) {
     raw.VITUIXCAD.DATABASE.DRIVER = [raw.VITUIXCAD.DATABASE.DRIVER as ReturnType<typeof raw.VITUIXCAD.DATABASE.DRIVER[0]['valueOf']>] as typeof raw.VITUIXCAD.DATABASE.DRIVER;
   }
+  // Guard: individual drivers may have PARAM undefined if they have no parameters
+  if (Array.isArray(raw.VITUIXCAD.DATABASE.DRIVER)) {
+    for (const d of raw.VITUIXCAD.DATABASE.DRIVER) {
+      d.PARAM = d.PARAM ?? [];
+    }
+  }
   return raw;
 }
 
