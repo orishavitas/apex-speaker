@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { EnclosureType, LoadingVariant, WaySlot } from '@/lib/types/speaker-domain';
@@ -234,9 +235,30 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
   return null;
 }
 
-// ── Main workspace ────────────────────────────────────────────────────────────
-export default function WorkspacePage() {
-  const { state, isLoading, saveStatus, updateWay, setNumWays } = useDesignStatePersistence(WORKSPACE_PROJECT_ID);
+// ── Active project chip ───────────────────────────────────────────────────────
+function ActiveProjectChip({ id, onClear }: { id: string; onClear: () => void }) {
+  const short = id.slice(0, 8);
+  return (
+    <div className="flex items-center justify-between font-mono text-xs py-1 px-2 rounded bg-zinc-800/60 border border-zinc-700/40 mb-3">
+      <span className="text-zinc-400">◈ <span className="text-zinc-300">{short}…</span></span>
+      <button onClick={onClear} className="text-zinc-600 hover:text-zinc-400 ml-2">✕</button>
+    </div>
+  );
+}
+
+// ── Inner workspace (needs useSearchParams → must be inside Suspense) ─────────
+function WorkspaceInner() {
+  const searchParams = useSearchParams();
+  const { state, isLoading, saveStatus, updateWay, setNumWays, setActiveProject } = useDesignStatePersistence(WORKSPACE_PROJECT_ID);
+
+  // On mount, pick up ?activeProject= from T04 navigation and persist it
+  useEffect(() => {
+    const incoming = searchParams.get('activeProject');
+    if (incoming && state && state.activeVituixcadProjectId !== incoming) {
+      setActiveProject(incoming);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, state === null]);
 
   // Loading skeleton
   if (isLoading) {
@@ -273,7 +295,7 @@ export default function WorkspacePage() {
     );
   }
 
-  const { numWays, slots } = state;
+  const { numWays, slots, activeVituixcadProjectId } = state;
 
   return (
     <div
@@ -308,6 +330,17 @@ export default function WorkspacePage() {
         </div>
 
         <Separator className="bg-zinc-800 mb-4" />
+
+        {/* Active VituixCAD project */}
+        {activeVituixcadProjectId && (
+          <div className="mb-4">
+            <div className="font-mono text-xs text-zinc-500 mb-1">Active Project</div>
+            <ActiveProjectChip
+              id={activeVituixcadProjectId}
+              onClear={() => setActiveProject(null)}
+            />
+          </div>
+        )}
 
         {/* Active ways summary */}
         <div className="mb-6">
@@ -348,5 +381,25 @@ export default function WorkspacePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Default export — Suspense wrapper required for useSearchParams ─────────────
+export default function WorkspacePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-[calc(100vh-48px)] grid overflow-hidden" style={{ gridTemplateColumns: '220px 1fr 380px' }}>
+        <div className="border-r border-zinc-800 p-4 bg-zinc-950 space-y-3 animate-pulse">
+          <div className="h-3 bg-zinc-800 rounded w-24" />
+          <div className="h-3 bg-zinc-800 rounded w-16" />
+        </div>
+        <div className="p-4 bg-zinc-950/50 space-y-3 animate-pulse">
+          <div className="h-12 bg-zinc-800 rounded" />
+        </div>
+        <div className="border-l border-zinc-800 bg-zinc-950" />
+      </div>
+    }>
+      <WorkspaceInner />
+    </Suspense>
   );
 }
