@@ -8,7 +8,8 @@ export interface Chunk {
   title: string;
 }
 
-const MAX_CHARS = 3200; // ~800 tokens at avg 4 chars/token
+const MAX_CHARS = 3200;      // ~800 tokens at avg 4 chars/token
+const HARD_CAP_CHARS = 28000; // ~7000 tokens — OpenAI text-embedding-3-small limit is 8192 tokens
 
 export function chunkConversation(rawContent: string, title: string): Chunk[] {
   // Strip frontmatter
@@ -62,5 +63,30 @@ export function chunkConversation(rawContent: string, title: string): Chunk[] {
     }
   }
 
-  return chunks;
+  // Hard-cap: split any chunk that exceeds the embedding model's token limit
+  const result: Chunk[] = [];
+  let resultIdx = 0;
+  for (const chunk of chunks) {
+    if (chunk.content.length <= HARD_CAP_CHARS) {
+      result.push({ ...chunk, chunkIndex: resultIdx++ });
+    } else {
+      const words = chunk.content.split(/\s+/);
+      let block = "";
+      for (const word of words) {
+        if (block.length + word.length + 1 > HARD_CAP_CHARS && block.length > 0) {
+          result.push({ content: block.trim(), chunkIndex: resultIdx, title: `${title} [${resultIdx + 1}]` });
+          resultIdx++;
+          block = word;
+        } else {
+          block = block ? `${block} ${word}` : word;
+        }
+      }
+      if (block.trim()) {
+        result.push({ content: block.trim(), chunkIndex: resultIdx, title: `${title} [${resultIdx + 1}]` });
+        resultIdx++;
+      }
+    }
+  }
+
+  return result;
 }

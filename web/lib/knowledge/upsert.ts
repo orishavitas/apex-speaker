@@ -1,7 +1,7 @@
 // Upserts knowledge chunks and their source record into Neon.
 // Idempotent: safe to run multiple times — will not duplicate chunks.
 
-import { db } from "../db";
+import { db, getNeon } from "../db";
 import { knowledgeChunks, sources } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import type { Chunk } from "./chunker";
@@ -70,18 +70,28 @@ export async function upsertKnowledgeChunks(opts: IngestOptions): Promise<void> 
         )
       );
 
-    await db.insert(knowledgeChunks).values({
-      sourceType: "chatgpt_conversation",
-      agentDomain,
-      title: chunk.title,
-      content: chunk.content,
-      tags: [agentDomain, "chatgpt_conversation"],
-      confidence: 0.8,
-      status: "canonical",
-      embedding,
-      sourceUrl,
-      sourcePath: filePath,
-      chunkIndex: chunk.chunkIndex,
-    });
+    // Drizzle's vector column serializes number[] as {"x","y",...} (JSON object
+    // notation) which pgvector rejects. Use the raw neon client with a tagged
+    // template literal so the embedding is interpolated as a plain string param
+    // and Postgres casts it correctly via ::vector(1536).
+    const embeddingStr = `[${embedding.join(",")}]`;
+    const neonSql = getNeon();
+    await neonSql`
+      INSERT INTO knowledge_chunks
+        (source_type, agent_domain, title, content, tags, confidence, status, embedding, source_url, source_path, chunk_index)
+      VALUES (
+        ${("chatgpt_conversation")}::source_type,
+        ${agentDomain}::agent_domain,
+        ${chunk.title},
+        ${chunk.content},
+        ${JSON.stringify([agentDomain, "chatgpt_conversation"])}::jsonb,
+        ${0.8},
+        ${"canonical"}::knowledge_status,
+        ${embeddingStr}::vector(1536),
+        ${sourceUrl ?? null},
+        ${filePath},
+        ${chunk.chunkIndex}
+      )
+    `;
   }
 }

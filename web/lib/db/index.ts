@@ -5,14 +5,24 @@ import { neon } from "@neondatabase/serverless";
 import * as schema from "./schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _neon: ReturnType<typeof neon> | null = null;
+
+export function getNeon() {
+  if (!_neon) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is not set");
+    }
+    _neon = neon(process.env.DATABASE_URL);
+  }
+  return _neon;
+}
 
 export function getDb() {
   if (!_db) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not set");
     }
-    const sql = neon(process.env.DATABASE_URL);
-    _db = drizzle(sql, { schema });
+    _db = drizzle(getNeon(), { schema });
   }
   return _db;
 }

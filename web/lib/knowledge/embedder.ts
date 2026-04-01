@@ -1,10 +1,10 @@
-// Wraps AI SDK embedMany — uses Vercel AI Gateway via model string.
+// Wraps AI SDK embedMany — uses OpenAI provider directly (bypasses AI Gateway).
 // Batch size 96 to stay under rate limits.
 
 import { embedMany } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 const BATCH_SIZE = 96;
-const EMBEDDING_MODEL = "openai/text-embedding-3-small"; // 1536 dims, via AI Gateway
 
 export async function embedChunks(texts: string[]): Promise<number[][]> {
   const allEmbeddings: number[][] = [];
@@ -12,7 +12,7 @@ export async function embedChunks(texts: string[]): Promise<number[][]> {
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
     const { embeddings } = await embedMany({
-      model: EMBEDDING_MODEL,
+      model: openai.embedding("text-embedding-3-small"),
       values: batch,
     });
     allEmbeddings.push(...embeddings);
