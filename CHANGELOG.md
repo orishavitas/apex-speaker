@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-04-01 — Sprint 2 Hardening + Phase 5 Production Deploy
+
+**Branch:** `master` (all work committed directly)
+
+### Deployed
+- **Production live:** https://web-blue-theta-12.vercel.app
+- **Neon DB:** connected via Vercel integration, schema pushed, pgvector enabled
+- **Knowledge base:** 23/23 conversation files ingested — 78 chunks, HNSW cosine index created
+
+### Fixed — Knowledge Ingest Pipeline
+- **Embedder bypass:** Switched from AI Gateway model string (`"openai/text-embedding-3-small"`) to `openai.embedding()` provider directly via `@ai-sdk/openai`. AI Gateway requires project-level billing activation; direct OpenAI key bypasses this.
+- **Drizzle vector serialization bug:** Drizzle's `vector()` column type serializes `number[]` as `{"x","y",...}` (JSON object notation) which pgvector rejects with "invalid input syntax for type vector". Fixed by bypassing Drizzle entirely for embedding inserts — use raw neon tagged template with `::vector(1536)` cast. Exported `getNeon()` from `lib/db/index.ts`.
+- **Chunk token limit:** Added `HARD_CAP_CHARS=28000` (~7000 tokens) hard-cap to chunker. One file (07-cardioid-speakers-amp-options.md) had a single chunk exceeding OpenAI's 8192-token limit; now splits on word boundaries.
+- **Enum name fix:** pgvector status enum is `knowledge_status`, not `chunk_status`.
+
+### Files Modified
+- `web/lib/knowledge/embedder.ts` — use `@ai-sdk/openai` provider directly
+- `web/lib/knowledge/upsert.ts` — raw neon SQL for embedding insert
+- `web/lib/knowledge/chunker.ts` — hard-cap at 28000 chars
+- `web/lib/db/index.ts` — export `getNeon()` raw client
+
+---
+
 ## 2026-03-31 — Sprint 2: Workspace Hardening
 
 **Branch:** `feature/workspace-hardening-sprint-2` (merged to master)

@@ -48,25 +48,30 @@ User Browser
 | Phase 2 — Knowledge Pipeline (ingest, embed, RAG search) | ✅ Complete |
 | Phase 3 — Agent Architecture (7 agents, routing, memory) | ✅ Complete |
 | Phase 4 — UI Dashboard (chat, streaming, domain badges) | ✅ Complete |
-| Phase 5 — Vercel Deployment | ⏳ Pending (awaiting user to run deploy steps) |
-| Sprint 1 — VituixCAD Integration | ✅ Built (branch: feature/vituixcad-sprint-1, needs merge + DB migration) |
+| Phase 5 — Vercel Deployment | ✅ **LIVE** — https://web-blue-theta-12.vercel.app |
+| Sprint 1 — VituixCAD Integration | ✅ Complete (merged to master) |
+| Sprint 2 — Workspace Hardening | ✅ Complete (merged to master) |
+| Knowledge Ingest | ✅ **23/23 files ingested** — 78 chunks, HNSW index live |
 
-All phases merged into `master`. App runs locally: `cd web && npm run dev` → http://localhost:3000
+All phases + sprints merged into `master`. **Production is live.**
+
+---
+
+## Live URLs
+
+- **Production:** https://web-blue-theta-12.vercel.app
+- **Vercel project:** orishavitas-projects/web
+- **Neon DB:** connected via Vercel integration (env vars auto-provisioned)
 
 ---
 
 ## Next Steps
 
-See [`TODO.md`](../TODO.md) for the full Phase 5 deployment checklist.
-
-Short version:
-1. `gh repo create orishavitas/apex-speaker --private --source=. --push`
-2. `cd web && vercel link`
-3. `vercel integration add neon`
-4. `vercel env pull .env.local`
-5. `npx drizzle-kit push`
-6. `npm run ingest && npm run register-notebooklm`
-7. `vercel deploy --prod`
+Sprint 3 candidates (see `memory/project-status.md` for full list):
+- Implement `calcSealedBox`, `calcPortedBox`, `calcHornLoading` math stubs
+- Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
+- Horn dimension fields full persistence
+- Live SPL frequency plot in workspace
 
 ---
 
@@ -114,6 +119,9 @@ Short version:
 - **Lazy DB init:** `neon()` is wrapped in a Proxy to avoid module-eval-time errors during Next.js build when `DATABASE_URL` is absent. Never call `neon()` at module scope.
 - **Graceful degradation:** App works without `DATABASE_URL` — agents answer from system prompts, RAG + memory are silently skipped.
 - **AI Gateway auth:** Uses OIDC (`VERCEL_OIDC_TOKEN`). Run `vercel env pull` after linking — no manual API keys needed.
+- **Embedder uses OpenAI directly:** `lib/knowledge/embedder.ts` uses `openai.embedding('text-embedding-3-small')` via `@ai-sdk/openai` — NOT the AI Gateway. AI Gateway model strings don't work for embeddings without billing activation. `OPENAI_API_KEY` must be in `.env.local` for ingest to run.
+- **Drizzle vector bug:** Drizzle's `vector()` column serializes `number[]` as `{"x","y",...}` (JSON object notation) which pgvector rejects. Workaround: use raw `getNeon()` client with tagged template literal and `::vector(1536)` cast. See `lib/knowledge/upsert.ts`.
+- **Chunk hard-cap:** `lib/knowledge/chunker.ts` enforces `HARD_CAP_CHARS=28000` (~7000 tokens) to prevent exceeding OpenAI's 8192-token embedding limit.
 - **NotebookLM:** No API. Registered in DB as `source_type: 'notebooklm'`. Research agent surfaces it by URL.
 
 ---
