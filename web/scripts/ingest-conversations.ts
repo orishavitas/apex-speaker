@@ -16,7 +16,7 @@ import { getPrimaryDomain } from "./tag-domains";
 
 const KNOWLEDGE_DIR = path.resolve(
   __dirname,
-  "../../../../speaker-building-knowledge"
+  "../../../speaker-building-knowledge"
 );
 
 interface FrontMatter {

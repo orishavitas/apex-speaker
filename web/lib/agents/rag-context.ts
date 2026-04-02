@@ -1,12 +1,11 @@
 // Retrieves top-k knowledge chunks for a given query + domain via pgvector cosine similarity.
 
 import { embed } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { db } from "../db";
 import { knowledgeChunks } from "../db/schema";
 import { sql, eq, and } from "drizzle-orm";
 import type { AgentDomain, KnowledgeContext } from "./types";
-
-const EMBEDDING_MODEL = "openai/text-embedding-3-small";
 
 export async function getRAGContext(
   query: string,
@@ -14,7 +13,7 @@ export async function getRAGContext(
   limit = 4
 ): Promise<KnowledgeContext[]> {
   const { embedding } = await embed({
-    model: EMBEDDING_MODEL,
+    model: openai.embedding("text-embedding-3-small"),
     value: query,
   });
 
