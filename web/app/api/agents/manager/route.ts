@@ -48,6 +48,13 @@ export async function POST(req: NextRequest) {
 
   const lastUserMessage = messages.filter((m: ChatMessage) => m.role === "user").at(-1);
   const query = lastUserMessage?.content ?? "";
+
+  // Explicit wizard trigger — starter prompt injects this sentinel token
+  if (query.includes("__WIZARD_TRIGGER__")) {
+    const { POST: wizardPost } = await import("../design-wizard/route");
+    return wizardPost(req);
+  }
+
   const routedDomain = classifyDomain(query);
 
   let systemPrompt = SYSTEM_PROMPTS.manager;
