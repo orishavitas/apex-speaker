@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SpeakerCanvas } from './speaker-canvas';
 import { CRTOverlay } from './crt-overlay';
@@ -10,6 +10,11 @@ export function LandingPage() {
   const router = useRouter();
   const [crtMessage, setCrtMessage] = useState<string | null>(null);
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
 
   const advance = () => router.push('/dashboard/chat');
 
@@ -43,6 +48,16 @@ export function LandingPage() {
           style={{ color: '#10b981', textShadow: '0 0 10px #10b981' }}
         >
           {crtMessage}
+        </div>
+      )}
+
+      {/* Mobile label */}
+      {isMobile && (
+        <div
+          className="absolute top-20 left-1/2 -translate-x-1/2 font-mono text-xs pointer-events-none z-20 border border-emerald-900/40 px-3 py-1"
+          style={{ color: '#10b981' }}
+        >
+          PORTABLE UNIT DETECTED
         </div>
       )}
 
