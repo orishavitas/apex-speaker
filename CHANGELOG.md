@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## 2026-04-02 — Sprint 3: Math Engine + Workspace Results UI
+
+**Branch:** `master`
+
+### Sprint 3 Executive Brief
+Purpose: Connect the Thiele-Small math engine to the workspace UI so acoustic predictions appear live in every WayCard as the user configures enclosure type and volume. Previously, `calcSealedBox`, `calcPortedBox`, and `calcHornLoading` existed as complete implementations with no UI surface.
+
+### What Was Done
+
+**Task 1 — `/api/drivers/[id]` endpoint** (`web/app/api/drivers/[id]/route.ts`)
+New single-driver fetch route. Returns full driver row by UUID. Used by WayCard to retrieve T/S parameters when a driver is assigned to a way. Returns 404 gracefully if driver not found or DB unavailable.
+
+**Task 2 — `WaySlot.netVolumeLiters` field** (`web/lib/types/speaker-domain.ts`)
+Added optional `netVolumeLiters` field to the `WaySlot` interface. The existing persistence hook (`useDesignStatePersistence`) serializes the entire slot as JSONB, so this field is stored and restored automatically with no schema migration needed.
+
+**Task 3 — WayCard volume input**
+Added a numeric input (litres) below the enclosure type selector for sealed/ported enclosures. Writes back via `onWayChange` — persisted in the design state JSONB with 800ms debounce.
+
+**Task 4 — T/S parameter fetch**
+`useEffect` in WayCard watches `slot.driverDatabaseId`. When set, fetches from `/api/drivers/[id]`, maps the DB row to `ThieleSmallParams` via `driverRowToTS()`. Driver name displayed in the WayCard header. Graceful null handling for drivers with incomplete params.
+
+**Task 5 — Math results panels**
+- `SealedResults`: shows Qtc, f3 (Hz), fb (Hz), peak_dB (highlighted amber if >0), and a quality string from `sealedBoxQuality()` (e.g. "Near-Butterworth — flat response, optimal")
+- `PortedResults`: shows fb, f3, group delay (ms), port velocity (m/s) — velocity highlighted amber if >15 m/s, with chuffing warning from `portVelocityWarning()`
+- `HornResults`: shows fc (Hz), efficiency (%), mouth loading (dB) — shows "enter dimensions" placeholder if throat/mouth not yet filled
+
+**Also fixed** — `rag-context.ts` was using AI Gateway model string for embeddings (silent failure without billing activation). Switched to `openai.embedding()` directly, matching the ingest pipeline fix from last session.
+
+### Files Modified
+- `web/app/api/drivers/[id]/route.ts` — new endpoint
+- `web/app/dashboard/workspace/page.tsx` — WayCard math wiring
+- `web/lib/types/speaker-domain.ts` — WaySlot.netVolumeLiters
+- `web/lib/types/speaker-math.ts` — full T/S math implementation
+- `web/lib/agents/rag-context.ts` — embedder fix
+
+---
+
 ## 2026-04-01 — Sprint 2 Hardening + Phase 5 Production Deploy
 
 **Branch:** `master` (all work committed directly)

@@ -33,7 +33,7 @@ User Browser
 **VituixCAD integration (Sprint 1 — feature/vituixcad-sprint-1 branch):**
 - `web/lib/parser/` — fast-xml-parser based .vxp/.vxd/.vxb parser
 - `web/lib/types/speaker-domain.ts` — canonical domain model (SpeakerConfig, Way, LoadingConfig discriminated union)
-- `web/lib/types/speaker-math.ts` — Phase B math stubs (calcSealedBox, calcPortedBox, calcHornLoading)
+- `web/lib/types/speaker-math.ts` — T/S math engine: calcSealedBox, calcPortedBox, calcHornLoading (Sprint 3 — fully implemented)
 - 3 new DB tables: vituixcad_projects, driver_database, design_state
 - 4 new routes: /dashboard/projects, /dashboard/drivers, /dashboard/workspace, /dashboard/projects/[id]
 - 5 new API routes: /api/upload, /api/projects, /api/projects/[id], /api/design-state, /api/drivers
@@ -51,6 +51,7 @@ User Browser
 | Phase 5 — Vercel Deployment | ✅ **LIVE** — https://web-blue-theta-12.vercel.app |
 | Sprint 1 — VituixCAD Integration | ✅ Complete (merged to master) |
 | Sprint 2 — Workspace Hardening | ✅ Complete (merged to master) |
+| Sprint 3 — Math Engine + Results UI | ✅ Complete |
 | Knowledge Ingest | ✅ **23/23 files ingested** — 78 chunks, HNSW index live |
 
 All phases + sprints merged into `master`. **Production is live.**
@@ -67,10 +68,11 @@ All phases + sprints merged into `master`. **Production is live.**
 
 ## Next Steps
 
-Sprint 3 candidates (see `memory/project-status.md` for full list):
-- Implement `calcSealedBox`, `calcPortedBox`, `calcHornLoading` math stubs
+Sprint 4 candidates:
+- Horn dimension persistence: `HornLoadingPanel` fields not wired to `onWayChange` — values disappear on re-render
+- Workspace chat (Col 3): static input, not wired to agent API
 - Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
-- Horn dimension fields full persistence
+- Live SPL frequency plot
 - Live SPL frequency plot in workspace
 
 ---

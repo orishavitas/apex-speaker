@@ -12,17 +12,28 @@
 
 ---
 
-## Sprint 3 Candidates
+## ✅ Sprint 3 — Math Engine + Workspace Results (2026-04-02)
 
-### Math Foundation (highest value)
-- [ ] Implement `calcSealedBox` — Butterworth/Chebyshev/custom Qtc alignments (`web/lib/types/speaker-math.ts`)
-- [ ] Implement `calcPortedBox` — Thiele/Small ported alignment
-- [ ] Implement `calcHornLoading` — throat efficiency, mouth loading
+- [x] Implement `calcSealedBox` — Qtc, f3, fb, peak_dB via Butterworth/Chebyshev alignment
+- [x] Implement `calcPortedBox` — B4 alignment, group delay, port velocity
+- [x] Implement `calcHornLoading` — fc by profile, throat coupling efficiency
+- [x] Fix RAG embedder (`rag-context.ts`) — AI Gateway string → `openai.embedding()` directly
+- [x] `/api/drivers/[id]` — single driver endpoint
+- [x] `WaySlot.netVolumeLiters` — volume persists in design state
+- [x] WayCard volume input (L) for sealed/ported
+- [x] WayCard T/S fetch from driver DB when driver assigned
+- [x] SealedResults panel: Qtc, f3, fb, peak_dB + quality label
+- [x] PortedResults panel: fb, f3, group delay, port velocity + chuffing warning
+- [x] HornResults panel: fc, efficiency%, mouth loading
+
+---
+
+## Sprint 4 Candidates
 
 ### Workspace Enhancements
-- [ ] Live SPL frequency plot (stub → Phase B simulation)
+- [ ] Horn dimension fields full persistence (throat/mouth/length persist in design state)
+- [ ] Live SPL frequency plot
 - [ ] Crossover topology panel
-- [ ] Horn dimension fields full persistence (throat/mouth/length)
 
 ### Driver DB
 - [ ] Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
