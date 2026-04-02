@@ -146,6 +146,7 @@ export interface WaySlot {
   crossoverFreqHz: number | null;
   enclosureType: EnclosureType;
   loading: LoadingConfig;
+  netVolumeLiters?: number | null;
 }
 
 export interface DesignState {

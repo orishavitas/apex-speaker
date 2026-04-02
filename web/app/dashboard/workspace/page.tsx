@@ -4,9 +4,20 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import type { EnclosureType, LoadingVariant, WaySlot } from '@/lib/types/speaker-domain';
+import type { EnclosureType, LoadingVariant, WaySlot, ThieleSmallParams } from '@/lib/types/speaker-domain';
 import { useDesignStatePersistence, type SaveStatus } from '@/lib/hooks/use-design-state-persistence';
 import { WORKSPACE_PROJECT_ID } from '@/lib/constants/workspace';
+import {
+  calcSealedBox,
+  calcPortedBox,
+  calcHornLoading,
+  sealedBoxQuality,
+  portVelocityWarning,
+  type SealedBoxResult,
+  type PortedBoxResult,
+  type HornResult,
+} from '@/lib/types/speaker-math';
+import type { HornProfile } from '@/lib/types/speaker-domain';
 
 // ── Mini chat for workspace ──────────────────────────────────────────────────
 function WorkspaceChat({ domain }: { domain: string }) {
@@ -122,6 +133,130 @@ function HornLoadingPanel({
   );
 }
 
+// ── Driver DB row shape (subset we care about) ───────────────────────────────
+interface DriverRow {
+  id: string;
+  manufacturer: string;
+  model: string;
+  fsHz: number | null;
+  qts: number | null;
+  qes: number | null;
+  qms: number | null;
+  vasLiters: number | null;
+  mmsGrams: number | null;
+  cmsMmPerN: number | null;
+  rmsKgS: number | null;
+  sdCm2: number | null;
+  xmaxMm: number | null;
+  reOhm: number | null;
+  leMh: number | null;
+  bl: number | null;
+  sensitivity1m1w: number | null;
+  powerWatts: number | null;
+}
+
+function driverRowToTS(d: DriverRow): ThieleSmallParams | null {
+  const required = [d.fsHz, d.qts, d.qes, d.qms, d.sdCm2, d.xmaxMm, d.reOhm, d.leMh, d.bl, d.mmsGrams, d.cmsMmPerN, d.rmsKgS, d.sensitivity1m1w, d.powerWatts];
+  if (required.some(v => v === null || v === undefined)) return null;
+  return {
+    fs_hz:        d.fsHz!,
+    Qts:          d.qts!,
+    Qes:          d.qes!,
+    Qms:          d.qms!,
+    Sd_cm2:       d.sdCm2!,
+    Xmax_mm:      d.xmaxMm!,
+    Re_ohms:      d.reOhm!,
+    Le_mH:        d.leMh!,
+    BL_Tm:        d.bl!,
+    Mms_g:        d.mmsGrams!,
+    Cms_mmPerN:   d.cmsMmPerN!,
+    Rms_kgPerS:   d.rmsKgS!,
+    SPL_1w1m_dB:  d.sensitivity1m1w!,
+    Pmax_W:       d.powerWatts!,
+    Vas_L:        d.vasLiters ?? undefined,
+  };
+}
+
+// ── Math results panel ────────────────────────────────────────────────────────
+function MathResult({ label, value, unit, warn }: { label: string; value: string | number; unit?: string; warn?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <span className="font-mono text-xs text-zinc-500">{label}</span>
+      <span className={`font-mono text-xs tabular-nums ${warn ? 'text-amber-400' : 'text-zinc-200'}`}>
+        {value}{unit ? <span className="text-zinc-500 ml-0.5">{unit}</span> : null}
+      </span>
+    </div>
+  );
+}
+
+function SealedResults({ ts, volumeL }: { ts: ThieleSmallParams; volumeL: number }) {
+  const res: SealedBoxResult = calcSealedBox(ts, { type: 'sealed', net_volume_L: volumeL });
+  const quality = sealedBoxQuality(res.Qtc);
+  return (
+    <div className="mt-3 border border-zinc-800/60 rounded p-2 bg-zinc-900/40 space-y-0">
+      <div className="font-mono text-xs text-violet-400 mb-1.5">Sealed Box Analysis</div>
+      <MathResult label="Qtc" value={res.Qtc} />
+      <MathResult label="f3" value={res.f3_hz} unit="Hz" />
+      <MathResult label="fb" value={res.fb_hz} unit="Hz" />
+      {res.peak_dB > 0 && <MathResult label="peak" value={`+${res.peak_dB}`} unit="dB" warn />}
+      <div className="mt-1.5 font-mono text-xs text-zinc-500 leading-tight">{quality}</div>
+    </div>
+  );
+}
+
+function PortedResults({ ts, volumeL }: { ts: ThieleSmallParams; volumeL: number }) {
+  const res: PortedBoxResult = calcPortedBox(ts, { type: 'ported', net_volume_L: volumeL });
+  const velocityWarn = portVelocityWarning(res.port_velocity_ms);
+  return (
+    <div className="mt-3 border border-zinc-800/60 rounded p-2 bg-zinc-900/40 space-y-0">
+      <div className="font-mono text-xs text-amber-400 mb-1.5">Ported Box Analysis</div>
+      <MathResult label="fb" value={res.fb_hz} unit="Hz" />
+      <MathResult label="f3" value={res.f3_hz} unit="Hz" />
+      <MathResult label="group delay" value={res.group_delay_ms} unit="ms" />
+      <MathResult label="port velocity" value={res.port_velocity_ms} unit="m/s" warn={!!velocityWarn} />
+      {velocityWarn && (
+        <div className="mt-1.5 font-mono text-xs text-amber-400 leading-tight">{velocityWarn}</div>
+      )}
+    </div>
+  );
+}
+
+function HornResults({ ts, slot }: { ts: ThieleSmallParams; slot: WaySlot }) {
+  const loading = slot.loading;
+  const isHornProfile = ['tractrix','exponential','conical','oblate_spheroidal','le_cleach'].includes(loading.variant);
+  if (!isHornProfile) return null;
+
+  // Need mouth_area_cm2 and throat_area_cm2 — if not filled in yet, show placeholder
+  const hornConfig = loading as { variant: HornProfile; mouth_area_cm2?: number; throat_area_cm2?: number };
+  if (!hornConfig.mouth_area_cm2 || !hornConfig.throat_area_cm2) {
+    return (
+      <div className="mt-3 border border-zinc-800/60 rounded p-2 bg-zinc-900/40">
+        <div className="font-mono text-xs text-violet-400 mb-1">Horn Analysis</div>
+        <div className="font-mono text-xs text-zinc-600">Enter throat + mouth dimensions to calculate</div>
+      </div>
+    );
+  }
+
+  const res: HornResult = calcHornLoading(ts, {
+    variant: hornConfig.variant as HornProfile,
+    throat_area_cm2: hornConfig.throat_area_cm2,
+    mouth_area_cm2: hornConfig.mouth_area_cm2,
+    length_mm: (hornConfig as { length_mm?: number }).length_mm ?? 300,
+    cutoff_hz: (hornConfig as { cutoff_hz?: number }).cutoff_hz ?? 0,
+    coverage_h_deg: (hornConfig as { coverage_h_deg?: number }).coverage_h_deg ?? 90,
+    coverage_v_deg: (hornConfig as { coverage_v_deg?: number }).coverage_v_deg ?? 60,
+  });
+
+  return (
+    <div className="mt-3 border border-zinc-800/60 rounded p-2 bg-zinc-900/40 space-y-0">
+      <div className="font-mono text-xs text-violet-400 mb-1.5">Horn Analysis</div>
+      <MathResult label="cutoff fc" value={res.fc_hz} unit="Hz" />
+      <MathResult label="efficiency" value={res.efficiency_pct} unit="%" />
+      <MathResult label="mouth loading" value={res.mouth_loading_dB} unit="dB" />
+    </div>
+  );
+}
+
 // ── Way slot card ─────────────────────────────────────────────────────────────
 const ENCLOSURE_TYPES: { value: EnclosureType; label: string }[] = [
   { value: 'sealed',          label: 'Sealed' },
@@ -152,6 +287,39 @@ function WayCard({
     slot.loading.variant as LoadingVariant
   );
   const [enclosureType, setEnclosureType] = useState<EnclosureType>(slot.enclosureType);
+  const [tsParams, setTsParams] = useState<ThieleSmallParams | null>(null);
+  const [driverLabel, setDriverLabel] = useState<string | null>(null);
+
+  // Fetch T/S params when driver ID is present
+  useEffect(() => {
+    if (!slot.driverDatabaseId) {
+      setTsParams(null);
+      setDriverLabel(null);
+      return;
+    }
+    fetch(`/api/drivers/${slot.driverDatabaseId}`)
+      .then(r => r.ok ? r.json() as Promise<{ driver: DriverRow }> : null)
+      .then(data => {
+        if (!data) return;
+        const ts = driverRowToTS(data.driver);
+        setTsParams(ts);
+        setDriverLabel(`${data.driver.manufacturer} ${data.driver.model}`);
+      })
+      .catch(() => { /* silently skip — no DB */ });
+  }, [slot.driverDatabaseId]);
+
+  // Keep local state in sync when slot changes externally (e.g. on load)
+  useEffect(() => {
+    setEnclosureType(slot.enclosureType);
+  }, [slot.enclosureType]);
+
+  useEffect(() => {
+    setLoadingVariant(slot.loading.variant as LoadingVariant);
+  }, [slot.loading.variant]);
+
+  const volumeL = slot.netVolumeLiters ?? null;
+  const needsVolume = (enclosureType === 'sealed' || enclosureType === 'ported') && tsParams !== null;
+  const canShowMath = tsParams !== null && (enclosureType === 'horn' || (volumeL !== null && volumeL > 0));
 
   return (
     <div className="border border-zinc-800 rounded-lg overflow-hidden mb-3">
@@ -165,7 +333,7 @@ function WayCard({
             {ROLE_LABELS[slot.role] ?? slot.role}
           </span>
           {slot.driverDatabaseId ? (
-            <span className="font-mono text-xs text-emerald-400">driver assigned</span>
+            <span className="font-mono text-xs text-emerald-400">{driverLabel ?? 'driver assigned'}</span>
           ) : (
             <span className="font-mono text-xs text-zinc-600">[no driver]</span>
           )}
@@ -190,7 +358,7 @@ function WayCard({
           {/* Enclosure */}
           <div>
             <div className="text-xs font-mono text-zinc-500 mb-2">Enclosure</div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 mb-3">
               {ENCLOSURE_TYPES.map(e => (
                 <button
                   key={e.value}
@@ -208,6 +376,51 @@ function WayCard({
                 </button>
               ))}
             </div>
+
+            {/* Volume input for sealed/ported */}
+            {(enclosureType === 'sealed' || enclosureType === 'ported') && (
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-zinc-500 w-16">volume</span>
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.5"
+                  value={volumeL ?? ''}
+                  onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    onWayChange?.(index, { netVolumeLiters: isNaN(v) ? null : v });
+                  }}
+                  placeholder="e.g. 20"
+                  className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 font-mono text-xs text-right text-zinc-200 outline-none focus:border-zinc-500 tabular-nums"
+                />
+                <span className="font-mono text-xs text-zinc-600">L</span>
+                {needsVolume && !volumeL && (
+                  <span className="font-mono text-xs text-zinc-600">← enter to calculate</span>
+                )}
+              </div>
+            )}
+
+            {/* Math results */}
+            {canShowMath && tsParams && (
+              <>
+                {enclosureType === 'sealed' && volumeL && (
+                  <SealedResults ts={tsParams} volumeL={volumeL} />
+                )}
+                {enclosureType === 'ported' && volumeL && (
+                  <PortedResults ts={tsParams} volumeL={volumeL} />
+                )}
+                {enclosureType === 'horn' && (
+                  <HornResults ts={tsParams} slot={slot} />
+                )}
+              </>
+            )}
+
+            {/* No T/S params message */}
+            {slot.driverDatabaseId && !tsParams && (
+              <div className="mt-2 font-mono text-xs text-zinc-600">
+                Driver missing T/S params — calculations unavailable
+              </div>
+            )}
           </div>
 
           <Separator className="bg-zinc-800" />
