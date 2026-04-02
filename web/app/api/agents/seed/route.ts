@@ -10,19 +10,20 @@ import { SYSTEM_PROMPTS } from "@/lib/agents/system-prompts";
 import type { AgentDomain } from "@/lib/agents/types";
 
 const AGENT_DISPLAY_NAMES: Record<AgentDomain, string> = {
-  manager: "Project Manager",
-  acoustics: "Acoustics Specialist",
-  enclosure: "Enclosure Specialist",
-  crossover: "Crossover Specialist",
-  theory: "Theory Specialist",
-  mechanical: "Mechanical Specialist",
-  research: "Research Specialist",
-  vituixcad: "VituixCAD Specialist",
+  manager:       "Project Manager",
+  acoustics:     "Acoustics Specialist",
+  enclosure:     "Enclosure Specialist",
+  crossover:     "Crossover Specialist",
+  theory:        "Theory Specialist",
+  mechanical:    "Mechanical Specialist",
+  research:      "Research Specialist",
+  vituixcad:     "VituixCAD Specialist",
+  design_wizard: "Design Wizard",
 };
 
 const DOMAINS: AgentDomain[] = [
   "manager", "acoustics", "enclosure", "crossover",
-  "theory", "mechanical", "research", "vituixcad",
+  "theory", "mechanical", "research", "vituixcad", "design_wizard",
 ];
 
 export async function POST() {

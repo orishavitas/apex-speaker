@@ -10,7 +10,7 @@ import { readMemory, formatMemory } from "@/lib/agents/memory";
 import type { AgentDomain, AgentChatRequest, ChatMessage } from "@/lib/agents/types";
 
 // Keyword-based domain classifier (Phase 4 upgrades to LLM-based routing)
-const DOMAIN_KEYWORDS: Record<Exclude<AgentDomain, "manager">, string[]> = {
+const DOMAIN_KEYWORDS: Record<Exclude<AgentDomain, "manager" | "design_wizard">, string[]> = {
   // vituixcad is listed first so it wins ties when keywords overlap (e.g. "group delay" in a sim context)
   vituixcad: ["vituixcad", "vituixCAD", "simulation file", "vxp", "vxd", "vxb", "crossover simulation", "loaded project", "parsed project", "simulation data", "port velocity", "group delay", "baffle step"],
   acoustics: ["frequency", "spl", "sensitivity", "waveguide", "horn", "directivity", "dispersion", "thiele", "small", "fs", "qts", "vas", "xmax", "response", "polar", "cardioid"],
@@ -21,15 +21,15 @@ const DOMAIN_KEYWORDS: Record<Exclude<AgentDomain, "manager">, string[]> = {
   research: ["recommend", "driver", "find", "which", "best", "compare", "forum", "diyaudio", "parts express", "scanspeak", "seas", "amplifier", "notebooklm"],
 };
 
-function classifyDomain(query: string): Exclude<AgentDomain, "manager"> {
+function classifyDomain(query: string): Exclude<AgentDomain, "manager" | "design_wizard"> {
   const lower = query.toLowerCase();
-  const scores = {} as Record<Exclude<AgentDomain, "manager">, number>;
+  const scores = {} as Record<Exclude<AgentDomain, "manager" | "design_wizard">, number>;
 
-  for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS) as [Exclude<AgentDomain, "manager">, string[]][]) {
+  for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS) as [Exclude<AgentDomain, "manager" | "design_wizard">, string[]][]) {
     scores[domain] = keywords.filter((kw) => lower.includes(kw)).length;
   }
 
-  const ranked = (Object.entries(scores) as [Exclude<AgentDomain, "manager">, number][])
+  const ranked = (Object.entries(scores) as [Exclude<AgentDomain, "manager" | "design_wizard">, number][])
     .sort(([, a], [, b]) => b - a);
 
   return ranked[0][1] > 0 ? ranked[0][0] : "research";

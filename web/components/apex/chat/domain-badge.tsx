@@ -10,7 +10,8 @@ const DOMAIN_CONFIG: Record<AgentDomain, { label: string; color: string; icon: s
   theory: { label: "Theory", color: "text-violet-400 border-violet-400/30", icon: "∂" },
   mechanical: { label: "Mechanical", color: "text-slate-400 border-slate-400/30", icon: "⚙" },
   research: { label: "Research", color: "text-cyan-400 border-cyan-400/30", icon: "◎" },
-  vituixcad: { label: "VituixCAD", color: "text-teal-400 border-teal-400/30", icon: "⊞" },
+  vituixcad:      { label: "VituixCAD",    color: "text-teal-400    border-teal-400/30",    icon: "⊞" },
+  design_wizard:  { label: "Wizard",       color: "text-emerald-400 border-emerald-400/30", icon: "◈" },
 };
 
 interface DomainBadgeProps {

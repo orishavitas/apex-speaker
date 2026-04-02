@@ -6,7 +6,8 @@ export type AgentDomain =
   | "mechanical"
   | "research"
   | "manager"
-  | "vituixcad";
+  | "vituixcad"
+  | "design_wizard";
 
 export interface ChatMessage {
   role: "user" | "assistant";

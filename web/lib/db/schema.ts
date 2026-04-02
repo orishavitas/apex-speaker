@@ -12,7 +12,7 @@ const vector = customType<{ data: number[]; config: { dimensions: number } }>({
 
 // Enums
 export const agentDomainEnum = pgEnum("agent_domain", [
-  "manager", "acoustics", "enclosure", "crossover", "theory", "mechanical", "research", "vituixcad"
+  "manager", "acoustics", "enclosure", "crossover", "theory", "mechanical", "research", "vituixcad", "design_wizard"
 ]);
 
 export const sourceTypeEnum = pgEnum("source_type", [
