@@ -17,7 +17,7 @@ export const agentDomainEnum = pgEnum("agent_domain", [
 
 export const sourceTypeEnum = pgEnum("source_type", [
   "chatgpt_conversation", "book_chapter", "forum_thread", "datasheet", "research_paper", "notebooklm",
-  "vituixcad_project", "driver_measurement"
+  "vituixcad_project", "driver_measurement", "community_build", "measurement"
 ]);
 
 export const knowledgeStatusEnum = pgEnum("knowledge_status", [
