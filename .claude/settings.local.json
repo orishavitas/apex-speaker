@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for id:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $id ===\")",
+      "Bash(f=\"C:/Users/ORISHA~1/AppData/Local/Temp/claude/C--Users-OriShavit-Documents-GitHub-apex-speaker/009329b9-6043-4ae4-a4e7-f51590ea69b3/tasks/$id.output\")",
+      "Read(//c/Users/OriShavit/Documents/GitHub/apex-speaker/**)",
+      "Bash(vercel --version)",
+      "Bash(gh --version)",
+      "Bash(gh repo:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel deploy:*)",
+      "Bash(echo $ANTHROPIC_API_KEY)",
+      "Bash(find /c/Users/OriShavit/Documents/GitHub -name .env* -not -path */node_modules/*)",
+      "Bash(find /c/Users/OriShavit/Documents/GitHub/apex-speaker/web -type f \\\\\\(-name *.test.ts -o -name *.test.tsx -o -name *.spec.ts -o -name *.spec.tsx \\\\\\) ! -path */node_modules/*)",
+      "Bash(ls:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(xargs -I {} basename {})",
+      "WebSearch",
+      "WebFetch(domain:loudspeakerdatabase.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:kimmosaunisto.net)",
+      "WebFetch(domain:www.spinorama.org)",
+      "WebFetch(domain:hificompass.com)",
+      "WebFetch(domain:ftp.samsiev.eu)",
+      "WebFetch(domain:speakerdata2034.blogspot.com)",
+      "WebFetch(domain:www.diyaudio.com)",
+      "WebFetch(domain:www.rjbaudio.com)"
+    ]
+  }
+}
