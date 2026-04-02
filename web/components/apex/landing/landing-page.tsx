@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SpeakerCanvas } from './speaker-canvas';
 import { CRTOverlay } from './crt-overlay';
+import { useEasterEggs } from './easter-eggs';
 
 export function LandingPage() {
   const router = useRouter();
@@ -11,6 +12,12 @@ export function LandingPage() {
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
 
   const advance = () => router.push('/dashboard/chat');
+
+  const { handleApexClick } = useEasterEggs({
+    onCrtMessage: setCrtMessage,
+    onBrandChange: setActiveBrand,
+    onAdvance: advance,
+  });
 
   return (
     <div
@@ -20,10 +27,11 @@ export function LandingPage() {
       <SpeakerCanvas activeBrand={activeBrand} />
       <CRTOverlay />
 
-      {/* APEX symbol */}
+      {/* APEX symbol — triple-click easter egg */}
       <div
         className="absolute top-8 left-1/2 -translate-x-1/2 font-mono text-2xl select-none z-20"
         style={{ color: '#10b981', textShadow: '0 0 20px #10b981, 0 0 40px #10b981' }}
+        onClick={handleApexClick}
       >
         ◈
       </div>
