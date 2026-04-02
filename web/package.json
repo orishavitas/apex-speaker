@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "ingest": "tsx scripts/ingest-conversations.ts",
-    "register-notebooklm": "tsx scripts/register-notebooklm.ts"
+    "register-notebooklm": "tsx scripts/register-notebooklm.ts",
+    "import:vituixcad": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-drivers.ts",
+    "import:vituixcad:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-drivers.ts --dry-run",
+    "import:deepsoic": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-deepsoic-drivers.ts",
+    "import:deepsoic:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-deepsoic-drivers.ts --dry-run",
+    "scrape:loudspeakerdb": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts",
+    "scrape:loudspeakerdb:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts --dry-run --limit 10"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.80",
