@@ -50,9 +50,15 @@ export async function POST(req: NextRequest) {
   const query = lastUserMessage?.content ?? "";
 
   // Explicit wizard trigger — starter prompt injects this sentinel token
+  // Body was already consumed above, so reconstruct a new Request with the parsed body
   if (query.includes("__WIZARD_TRIGGER__")) {
     const { POST: wizardPost } = await import("../design-wizard/route");
-    return wizardPost(req);
+    const clonedReq = new NextRequest(req.url, {
+      method: req.method,
+      headers: req.headers,
+      body: JSON.stringify(body),
+    });
+    return wizardPost(clonedReq);
   }
 
   const routedDomain = classifyDomain(query);
