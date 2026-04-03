@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 import { streamText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { eq } from "drizzle-orm";
 import { SYSTEM_PROMPTS } from "@/lib/agents/system-prompts";
 import { getRAGContext, formatRAGContext } from "@/lib/agents/rag-context";
@@ -99,7 +100,7 @@ export async function POST(
   }
 
   const result = streamText({
-    model: "anthropic/claude-sonnet-4.6",
+    model: anthropic("claude-sonnet-4.6"),
     system: systemPrompt,
     messages: messages.map((m: ChatMessage) => ({
       role: m.role,
