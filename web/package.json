@@ -14,9 +14,12 @@
     "import:deepsoic": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-deepsoic-drivers.ts",
     "import:deepsoic:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-deepsoic-drivers.ts --dry-run",
     "scrape:loudspeakerdb": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts",
-    "scrape:loudspeakerdb:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts --dry-run --limit 10"
+    "scrape:loudspeakerdb:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts --dry-run --limit 10",
+    "scrape:playwright": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts",
+    "scrape:playwright:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts --dry-run"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
     "@ai-sdk/gateway": "^3.0.80",
     "@ai-sdk/openai": "^3.0.49",
     "@ai-sdk/react": "^3.0.140",
@@ -37,6 +40,7 @@
     "geist": "^1.7.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
+    "playwright": "^1.59.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.5.0",
