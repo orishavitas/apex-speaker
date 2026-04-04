@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 import { streamText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getModel } from "@/lib/agents/model";
 import { SYSTEM_PROMPTS } from "@/lib/agents/system-prompts";
 import { readMemory, formatMemory } from "@/lib/agents/memory";
 import type { AgentDomain, AgentChatRequest, ChatMessage } from "@/lib/agents/types";
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4.6"),
+    model: getModel(),
     system: systemPrompt,
     messages: messages.map((m: ChatMessage) => ({
       role: m.role,
