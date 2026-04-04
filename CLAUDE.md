@@ -52,6 +52,7 @@ User Browser
 | Sprint 1 — VituixCAD Integration | ✅ Complete (merged to master) |
 | Sprint 2 — Workspace Hardening | ✅ Complete (merged to master) |
 | Sprint 3 — Math Engine + Results UI | ✅ Complete |
+| Wizard Sprint v2 — Fixes + hardening | 🔄 **IN PROGRESS** — code deployed, profile header bug under investigation |
 | Knowledge Ingest | ✅ **23/23 files ingested** — 78 chunks, HNSW index live |
 
 All phases + sprints merged into `master`. **Production is live.**
@@ -68,11 +69,30 @@ All phases + sprints merged into `master`. **Production is live.**
 
 ## Next Steps
 
-Sprint 4 candidates:
+### Wizard Sprint v2 — CHECKPOINT (2026-04-05)
+
+All code fixes committed and pushed (commit `5bfb4f2`). **One open bug:** `X-Wizard-Profile` response header returns `{}` despite signal extraction logic being correct (verified locally). Likely cause: Vercel deployment serving stale build OR `npx vercel ls` needed to confirm active deployment SHA matches `5bfb4f2`.
+
+**To resume:** Check which SHA is actually serving production (`vercel ls`), force redeploy if needed, then run 5 test scenarios from the sprint plan.
+
+**Wizard v2 fixes shipped:**
+1. ✅ Profile persistence via `onFinish` + `writeMemory`
+2. ✅ `experience_level` stripped from system prompt JSON
+3. ✅ `isProfileComplete` fixed (persistence was the root cause)
+4. ✅ `budget_low` falsy guard fixed (`=== undefined`)
+5. ✅ `__WIZARD_TRIGGER__` regex made global
+6. ✅ Signal extraction from conversation history (`parseSignalsFromMessages`)
+7. ✅ 7 signals: added `room_size` + `amplifier`
+8. ✅ `wizardActive` → `wizardActiveRef` `useEffect` sync
+9. ✅ `streamText` wrapped in try/catch
+10. ✅ System prompt: expert shortcut, refusal handling, adaptive confirmation gate
+
+**Deferred to v3:** LLM echoing profile state block back to user (needs prompt clarification), WizardPane showing all 7 signals, workspace chat wiring.
+
+### Sprint 4 candidates:
 - Horn dimension persistence: `HornLoadingPanel` fields not wired to `onWayChange` — values disappear on re-render
 - Workspace chat (Col 3): static input, not wired to agent API
 - Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
-- Live SPL frequency plot
 - Live SPL frequency plot in workspace
 
 ---

@@ -115,3 +115,27 @@ Introduced **debate-team sprint planning**: 4 specialist agents argue in paralle
 ## 2026-03-27 — Phases 1–4 Complete
 
 Phases 1–4 merged to master: Next.js foundation, knowledge pipeline (23 ChatGPT conversations ingested), 7-agent architecture, dashboard chat UI with streaming and domain badges.
+
+## 2026-04-05 — Wizard Sprint v2
+
+### Fixed
+- **[CRITICAL] Profile never persisted** — `writeMemory` was never called. Added `onFinish` callback to `streamText` that writes `serializeProfile(profile)` to `agent_memory` after every turn. Wizard now has state across turns and sessions.
+- **[CRITICAL] experience_level leaked into system prompt** — `JSON.stringify(profile)` included the level field. Now destructured out before prompt injection; injected separately in a clearly labelled internal-only block.
+- **[HIGH] budget_low falsy guard** — `!p.budget_low` evaluates true on $0 budgets. Fixed to `=== undefined`.
+- **[HIGH] __WIZARD_TRIGGER__ regex** — `String.replace(str)` only removes first occurrence. Changed to global regex `/g`.
+- **[HIGH] Signal extraction** — Added `parseSignalsFromMessages()`: scans all user messages for budget, placement, use_case, sound_signature, room_size, amplifier, experience_level using keyword patterns. Merges into profile before every request.
+- **[MEDIUM] wizardActiveRef sync** — Added `useEffect` to sync `wizardActive` state → `wizardActiveRef` preventing stale closure in transport fetch.
+- **[MEDIUM] streamText unguarded** — Wrapped in try/catch, returns 500 JSON on model failure.
+
+### Added
+- `room_size` and `amplifier` signals to `WizardProfile` (7 signals total, gate fires at 5/7)
+- Desktop topology detection in `deriveProjectedBuild`
+- System prompt: expert shortcut (3+ signals in one message), refusal/skip handling, off-topic escalation, experience-adaptive confirmation gate language (3 register variants)
+
+### Docs
+- `docs/wizard-sprint/versions/` — v1 and v2 snapshots of all 4 changed files
+- `docs/wizard-sprint/logs/v2-improvements.md` — full annotated change log
+- `docs/superpowers/plans/2026-04-03-wizard-sprint-v2.md` — sprint plan
+
+### Open
+- `X-Wizard-Profile` header returning `{}` in production — debug log added, investigation pending on resume

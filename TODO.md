@@ -28,6 +28,38 @@
 
 ---
 
+## 🔄 Wizard Sprint v2 — CHECKPOINT 2026-04-05
+
+### Completed
+- [x] Profile persistence via `onFinish` + `writeMemory` (was never called in v1)
+- [x] `experience_level` stripped from system prompt JSON before injection
+- [x] `isProfileComplete` root cause fixed (was always false due to missing persistence)
+- [x] `budget_low` falsy guard → `=== undefined`
+- [x] `__WIZARD_TRIGGER__` regex made global (`/g` flag)
+- [x] `parseSignalsFromMessages()` — extracts 7 signals from conversation history
+- [x] 7 signals: added `room_size` + `amplifier` to `WizardProfile`
+- [x] `useEffect` syncs `wizardActive` state → `wizardActiveRef`
+- [x] `streamText` wrapped in try/catch with 500 response
+- [x] System prompt: expert shortcut, refusal handling, adaptive confirmation gate
+- [x] v1 + v2 copies saved to `docs/wizard-sprint/versions/`
+- [x] Improvement log written: `docs/wizard-sprint/logs/v2-improvements.md`
+- [x] All commits pushed to origin/master, Vercel auto-deploy triggered
+
+### Open Bug (Resume Here)
+- [ ] `X-Wizard-Profile` header returns `{}` despite signal extraction being correct locally
+  - Regex logic verified correct in Node REPL
+  - Possible: Vercel serving stale deployment — run `vercel ls` to confirm active SHA matches `5bfb4f2`
+  - Debug log added in `5bfb4f2` — check Vercel function logs after next test request
+  - If stale: force redeploy via `vercel --prod` or trigger via empty commit + push
+
+### After Bug Fixed
+- [ ] Run 5 test scenarios from sprint plan (`docs/superpowers/plans/2026-04-03-wizard-sprint-v2.md`)
+- [ ] Fix LLM echoing `## Current profile state` block back to user (prompt needs "this is internal context, do not repeat it")
+- [ ] Save v2-final copies, update improvement log
+- [ ] Call wizard sprint DONE
+
+---
+
 ## Sprint 4 Candidates
 
 ### Workspace Enhancements
