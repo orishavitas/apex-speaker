@@ -22,11 +22,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Strip the wizard trigger token before sending to LLM
-  const cleanMessages: ChatMessage[] = messages.map((m) => ({
-    ...m,
-    content: m.content.replace("__WIZARD_TRIGGER__", "").trim() ||
-      "Let's design a speaker.",
-  }));
+  // AI SDK v6 UIMessage may have parts instead of content string
+  const cleanMessages: ChatMessage[] = messages.map((m) => {
+    const raw = m.content ??
+      (m as unknown as { parts?: { type: string; text?: string }[] }).parts
+        ?.filter((p) => p.type === "text")
+        .map((p) => p.text ?? "")
+        .join("") ?? "";
+    return {
+      ...m,
+      content: raw.replace("__WIZARD_TRIGGER__", "").trim() || "Let's design a speaker.",
+    };
+  });
 
   // Load existing profile from memory
   let profile: WizardProfile = {};

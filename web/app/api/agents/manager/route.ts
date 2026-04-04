@@ -48,7 +48,12 @@ export async function POST(req: NextRequest) {
   }
 
   const lastUserMessage = messages.filter((m: ChatMessage) => m.role === "user").at(-1);
-  const query = lastUserMessage?.content ?? "";
+  // AI SDK v6 UIMessage may have parts instead of content string
+  const query = lastUserMessage?.content ??
+    (lastUserMessage as unknown as { parts?: { type: string; text?: string }[] })?.parts
+      ?.filter((p) => p.type === "text")
+      .map((p) => p.text ?? "")
+      .join("") ?? "";
 
   // Explicit wizard trigger — starter prompt injects this sentinel token
   // Body was already consumed above, so reconstruct a new Request with the parsed body
