@@ -16,7 +16,9 @@
     "scrape:loudspeakerdb": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts",
     "scrape:loudspeakerdb:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdatabase.ts --dry-run --limit 10",
     "scrape:playwright": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts",
-    "scrape:playwright:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts --dry-run"
+    "scrape:playwright:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts --dry-run",
+    "import:vituixcad-txt": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-txt.ts",
+    "import:vituixcad-txt:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-txt.ts --dry-run"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.66",
