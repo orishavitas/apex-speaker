@@ -28,6 +28,12 @@ export default function ChatPage() {
   const [wizardProfile, setWizardProfile] = useState<Record<string, unknown> | null>(null);
   const [wizardBuild, setWizardBuild] = useState<Record<string, unknown> | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Ref so the transport fetch closure can read the current wizard state without stale closure
+  const wizardActiveRef = useRef(false);
+  // Keep ref in sync with state for stale-closure safety in the transport fetch
+  useEffect(() => {
+    wizardActiveRef.current = wizardActive;
+  }, [wizardActive]);
 
   const chat = useMemo(
     () =>
@@ -35,7 +41,12 @@ export default function ChatPage() {
         transport: new DefaultChatTransport({
           api: "/api/agents/manager",
           fetch: async (url, init) => {
-            const response = await globalThis.fetch(url, init);
+            // Route to wizard endpoint if wizard is active
+            const api = wizardActiveRef.current
+              ? "/api/agents/design-wizard"
+              : "/api/agents/manager";
+            const resolvedUrl = url.toString().replace("/api/agents/manager", api);
+            const response = await globalThis.fetch(resolvedUrl, init);
             const domain = response.headers.get("X-Routed-Domain") as AgentDomain | null;
             if (domain) setRoutedDomain(domain);
             const rawProfile = response.headers.get("X-Wizard-Profile");
@@ -61,6 +72,7 @@ export default function ChatPage() {
   }, [messages]);
 
   function triggerWizard() {
+    wizardActiveRef.current = true;
     setWizardActive(true);
     sendMessage({ text: "__WIZARD_TRIGGER__ Help me design a speaker." });
   }
