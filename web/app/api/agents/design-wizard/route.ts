@@ -142,6 +142,7 @@ export async function POST(req: NextRequest) {
 
   // Merge signals extracted from conversation history
   profile = parseSignalsFromMessages(cleanMessages, profile);
+  console.log("[design-wizard] profile after extraction:", JSON.stringify(profile));
 
   const projectedBuild = deriveProjectedBuild(profile);
   const profileComplete = isProfileComplete(profile);
