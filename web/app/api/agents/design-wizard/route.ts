@@ -120,6 +120,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "messages required" }, { status: 400 });
   }
 
+  // Debug: log incoming message shape
+  const firstMsg = messages[0] as unknown as Record<string, unknown>;
+  console.log("[design-wizard] first msg keys:", Object.keys(firstMsg));
+  console.log("[design-wizard] first msg content:", firstMsg.content);
+  console.log("[design-wizard] first msg parts:", JSON.stringify(firstMsg.parts)?.slice(0, 200));
+
   // Strip the wizard trigger token — global regex removes all occurrences
   const cleanMessages: ChatMessage[] = messages.map((m) => {
     const raw = extractText(m);
@@ -128,6 +134,8 @@ export async function POST(req: NextRequest) {
       content: raw.replace(/__WIZARD_TRIGGER__/g, "").trim() || "Let's design a speaker.",
     };
   });
+
+  console.log("[design-wizard] cleanMessages[0].content:", cleanMessages[0]?.content?.slice(0, 100));
 
   // Load existing profile from memory
   let profile: WizardProfile = {};
