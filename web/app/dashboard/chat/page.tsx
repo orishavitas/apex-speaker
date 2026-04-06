@@ -9,9 +9,26 @@ import { ChatInput } from "@/components/apex/chat/chat-input";
 import { DomainBadge } from "@/components/apex/chat/domain-badge";
 import { WizardPane } from "@/components/apex/chat/wizard-pane";
 import type { AgentDomain } from "@/lib/agents/types";
+// [CRS:StyleClean:2026-04-06] BUG-ORIGIN: WizardProfile typed as Record<string,unknown> — TypeScript safety bypassed with 'as' casts
+// FOUND-BY: QualityHound  SEVERITY: Low
+// ROOT-CAUSE: useState<Record<string, unknown> | null> used instead of the actual WizardProfile type
+// BEFORE: useState<Record<string, unknown> | null>(null) + 'as' casts on WizardPane props
+// AFTER: useState<WizardProfile | null>(null), WizardPane props passed directly without 'as' casts
+// VALIDATION-LAYER: business_logic — no type enforcement on the profile parse boundary
+// TEST: test_wizard_profile_typed_correctly
+import type { WizardProfile } from "@/lib/agents/wizard-profile";
+
+// [CRS:StyleClean:2026-04-06] BUG-ORIGIN: STARTER_PROMPTS[0] duplicated WIZARD_PROMPT as a string literal
+// FOUND-BY: QualityHound  SEVERITY: Low
+// ROOT-CAUSE: String literal in STARTER_PROMPTS array independent of WIZARD_PROMPT — could silently diverge
+// BEFORE: "Help me design a speaker from scratch →" (inline string)
+// AFTER: WIZARD_PROMPT reference — single source of truth
+// VALIDATION-LAYER: business_logic — no static check enforcing both values stay in sync
+// TEST: test_starter_prompt_wizard_triggers_wizard_flow
+const WIZARD_PROMPT = "Help me design a speaker from scratch →";
 
 const STARTER_PROMPTS = [
-  "Help me design a speaker from scratch →",
+  WIZARD_PROMPT,
   "Port diameter for 12L at 45Hz?",
   "RS180 in a sealed vs ported box?",
   "Linkwitz-Riley vs Butterworth crossover",
@@ -19,13 +36,25 @@ const STARTER_PROMPTS = [
   "Best waveguide angle for a 1\" tweeter",
 ];
 
-const WIZARD_PROMPT = "Help me design a speaker from scratch →";
-
 export default function ChatPage() {
+  // [CRS:LogicDoc:2026-04-06] BUG-ORIGIN: scalar routedDomain state causes all historical assistant bubbles to show the latest domain badge
+  // FOUND-BY: CodeReviewSwarm  SEVERITY: Medium
+  // ROOT-CAUSE: routedDomain is a single scalar value updated on every response. All MessageBubble renders read from this
+  //   same scalar, so every historical assistant message shows the domain of the most recent response.
+  // IDEAL FIX: Use Map<messageId, domain> state. In the fetch closure, capture a stable message identifier and store
+  //   the domain keyed by that ID. When rendering, look up domain from the map using msg.id.
+  // WHY DEFERRED: The AI SDK fetch closure fires during streaming — before the SDK has assigned a final msg.id to the
+  //   completed assistant message. There is no reliable per-message identifier available at fetch time that can be
+  //   correlated back to msg.id after streaming completes. Implementing this correctly requires either:
+  //     (a) a response header from the server carrying the message ID (server-side change required), or
+  //     (b) tracking message count/sequence and correlating by insertion order (fragile under retries/errors).
+  //   Neither approach is safe to add without a coordinated server-side change. Deferred to Wizard v3 / Sprint 4.
+  //   Track under FE-4 in the code review swarm output.
   const [routedDomain, setRoutedDomain] = useState<AgentDomain>("manager");
   const [input, setInput] = useState("");
   const [wizardActive, setWizardActive] = useState(false);
-  const [wizardProfile, setWizardProfile] = useState<Record<string, unknown> | null>(null);
+  // QH-10: typed as WizardProfile (imported above) — removes need for 'as' casts on WizardPane props
+  const [wizardProfile, setWizardProfile] = useState<WizardProfile | null>(null);
   const [wizardBuild, setWizardBuild] = useState<Record<string, unknown> | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   // Ref so the transport fetch closure can read the current wizard state without stale closure
@@ -51,11 +80,18 @@ export default function ChatPage() {
             if (domain) setRoutedDomain(domain);
             const rawProfile = response.headers.get("X-Wizard-Profile");
             const rawBuild = response.headers.get("X-Wizard-Build");
+            // [CRS:LogicDoc:2026-04-06] BUG-ORIGIN: Silent JSON.parse failure leaves WizardPane blank with no debug signal
+            // FOUND-BY: CodeReviewSwarm  SEVERITY: Medium
+            // ROOT-CAUSE: catch block discarded the error and raw header value, making it impossible to diagnose malformed JSON
+            // BEFORE: try { setWizardProfile(JSON.parse(rawProfile)); } catch { /* ignore */ }
+            // AFTER: catch logs console.warn with the raw header value so the failure is diagnosable
+            // VALIDATION-LAYER: debug — no logging at the parse boundary
+            // TEST: test_wizard_profile_parse_failure_warns_with_raw_value
             if (rawProfile) {
-              try { setWizardProfile(JSON.parse(rawProfile)); } catch { /* ignore */ }
+              try { setWizardProfile(JSON.parse(rawProfile)); } catch { console.warn("[APEX] Failed to parse X-Wizard-Profile header:", rawProfile); }
             }
             if (rawBuild) {
-              try { setWizardBuild(JSON.parse(rawBuild)); } catch { /* ignore */ }
+              try { setWizardBuild(JSON.parse(rawBuild)); } catch { console.warn("[APEX] Failed to parse X-Wizard-Build header:", rawBuild); }
             }
             return response;
           },
@@ -72,6 +108,17 @@ export default function ChatPage() {
   }, [messages]);
 
   function triggerWizard() {
+    // [CRS:LogicDoc:2026-04-06] BUG-ORIGIN: stale closure in transport fetch could miss wizardActive=true if only relying on useEffect sync
+    // FOUND-BY: CodeReviewSwarm  SEVERITY: Low
+    // ROOT-CAUSE: sendMessage() fires synchronously within the same tick as triggerWizard(). The useEffect that syncs
+    //   wizardActive → wizardActiveRef runs asynchronously AFTER React re-renders, which happens AFTER the current
+    //   call stack completes. If sendMessage triggers a fetch immediately in the same tick (before the re-render cycle),
+    //   the transport closure would read wizardActiveRef.current === false from the stale ref. The eager manual set here
+    //   ensures the ref is true before sendMessage is called, regardless of when React schedules the re-render.
+    // BEFORE: only useEffect synced the ref
+    // AFTER: eager-set ref here, useEffect remains as a safety net for other state-driven changes
+    // VALIDATION-LAYER: business_logic — async React render cycle not accounted for in transport closure design
+    // TEST: test_wizard_active_ref_set_before_send_message
     wizardActiveRef.current = true;
     setWizardActive(true);
     sendMessage({ text: "__WIZARD_TRIGGER__ Help me design a speaker." });
@@ -178,7 +225,7 @@ export default function ChatPage() {
           </div>
           <div className="flex-1 overflow-hidden">
             <WizardPane
-              profile={wizardProfile as Parameters<typeof WizardPane>[0]["profile"]}
+              profile={wizardProfile}
               build={wizardBuild as Parameters<typeof WizardPane>[0]["build"]}
             />
           </div>

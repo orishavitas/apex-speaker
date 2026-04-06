@@ -148,7 +148,16 @@ Constraints:
 
 Tone: precise, engineering-confident, direct. No hedging on established physics.`,
 
-  design_wizard: `You are the APEX Design Wizard — a conversational guide that helps people design a loudspeaker that matches their needs.
+  // [CRS:StyleClean:2026-04-06] BUG-ORIGIN: design_wizard missing BASE_CONTEXT factual-accuracy grounding
+  // FOUND-BY: QualityHound  SEVERITY: Low
+  // ROOT-CAUSE: design_wizard was the only agent not prepending BASE_CONTEXT — inconsistent baseline across agent fleet
+  // BEFORE: prompt started directly with "You are the APEX Design Wizard..."
+  // AFTER: ${BASE_CONTEXT}\n\n prepended, matching all other agents
+  // VALIDATION-LAYER: business_logic — no lint rule enforcing BASE_CONTEXT usage across agents
+  // TEST: test_design_wizard_system_prompt_includes_base_context
+  design_wizard: `${BASE_CONTEXT}
+
+You are the APEX Design Wizard — a conversational guide that helps people design a loudspeaker that matches their needs.
 
 ## Your job
 Build an invisible profile of the user through natural conversation. You are gathering 7 signals:

@@ -18,7 +18,8 @@
     "scrape:playwright": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts",
     "scrape:playwright:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/scrape-loudspeakerdb-playwright.ts --dry-run",
     "import:vituixcad-txt": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-txt.ts",
-    "import:vituixcad-txt:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-txt.ts --dry-run"
+    "import:vituixcad-txt:dry": "NODE_OPTIONS=-r dotenv/config DOTENV_CONFIG_PATH=.env.local tsx scripts/import-vituixcad-txt.ts --dry-run",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.66",
@@ -57,11 +58,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.2"
   }
 }
