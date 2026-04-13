@@ -52,7 +52,7 @@ User Browser
 | Sprint 1 — VituixCAD Integration | ✅ Complete (merged to master) |
 | Sprint 2 — Workspace Hardening | ✅ Complete (merged to master) |
 | Sprint 3 — Math Engine + Results UI | ✅ Complete |
-| Wizard Sprint v2 — Fixes + hardening | 🔄 **IN PROGRESS** — code deployed, profile header bug under investigation |
+| Wizard Sprint v2 — Fixes + hardening | ✅ **COMPLETE + LIVE** — pushed 2026-04-13, smoke-tested |
 | Knowledge Ingest | ✅ **23/23 files ingested** — 78 chunks, HNSW index live |
 
 All phases + sprints merged into `master`. **Production is live.**
@@ -69,31 +69,13 @@ All phases + sprints merged into `master`. **Production is live.**
 
 ## Next Steps
 
-### Wizard Sprint v2 — CHECKPOINT (2026-04-05)
+### Sprint 4-B: Driver Database Population
+Run Playwright scraper against loudspeakerdatabase.com to populate driver_database with ~400 drivers (woofer/tweeter/midrange/subwoofer). Script ready: `web/scripts/scrape-loudspeakerdb-playwright.ts`. Full plan: `docs/superpowers/plans/2026-04-04-unblock-production.md` Task 2.
 
-All code fixes committed and pushed (commit `5bfb4f2`). **One open bug:** `X-Wizard-Profile` response header returns `{}` despite signal extraction logic being correct (verified locally). Likely cause: Vercel deployment serving stale build OR `npx vercel ls` needed to confirm active deployment SHA matches `5bfb4f2`.
-
-**To resume:** Check which SHA is actually serving production (`vercel ls`), force redeploy if needed, then run 5 test scenarios from the sprint plan.
-
-**Wizard v2 fixes shipped:**
-1. ✅ Profile persistence via `onFinish` + `writeMemory`
-2. ✅ `experience_level` stripped from system prompt JSON
-3. ✅ `isProfileComplete` fixed (persistence was the root cause)
-4. ✅ `budget_low` falsy guard fixed (`=== undefined`)
-5. ✅ `__WIZARD_TRIGGER__` regex made global
-6. ✅ Signal extraction from conversation history (`parseSignalsFromMessages`)
-7. ✅ 7 signals: added `room_size` + `amplifier`
-8. ✅ `wizardActive` → `wizardActiveRef` `useEffect` sync
-9. ✅ `streamText` wrapped in try/catch
-10. ✅ System prompt: expert shortcut, refusal handling, adaptive confirmation gate
-
-**Deferred to v3:** LLM echoing profile state block back to user (needs prompt clarification), WizardPane showing all 7 signals, workspace chat wiring.
-
-### Sprint 4 candidates:
-- Horn dimension persistence: `HornLoadingPanel` fields not wired to `onWayChange` — values disappear on re-render
-- Workspace chat (Col 3): static input, not wired to agent API
-- Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
-- Live SPL frequency plot in workspace
+### Sprint 4-C candidates (next after 4-B):
+- Workspace chat wiring (Col 3 static input → real useChat)
+- Horn dimension persistence
+- Per-message domain badge (FE-4)
 
 ---
 
@@ -145,6 +127,13 @@ All code fixes committed and pushed (commit `5bfb4f2`). **One open bug:** `X-Wiz
 - **Drizzle vector bug:** Drizzle's `vector()` column serializes `number[]` as `{"x","y",...}` (JSON object notation) which pgvector rejects. Workaround: use raw `getNeon()` client with tagged template literal and `::vector(1536)` cast. See `lib/knowledge/upsert.ts`.
 - **Chunk hard-cap:** `lib/knowledge/chunker.ts` enforces `HARD_CAP_CHARS=28000` (~7000 tokens) to prevent exceeding OpenAI's 8192-token embedding limit.
 - **NotebookLM:** No API. Registered in DB as `source_type: 'notebooklm'`. Research agent surfaces it by URL.
+- **Vercel function lifetime:** `onFinish` callbacks (AI SDK streamText) are fire-and-forget. Wrap any DB writes inside `after()` from `next/server` — otherwise they race function teardown and silently drop.
+- **readMemory must filter by key:** `readMemory()` returns any row for the domain sorted by updatedAt. Always `.find(e => e.key === 'wizard_profile')` — never trust `[0]` is your key.
+- **writeMemory upsert:** Use `db.transaction()` or Drizzle `.onConflictDoUpdate()` — bare SELECT+INSERT is not atomic and will fail under concurrent requests.
+- **Prompt injection guard:** Never inject user-derived strings into system prompts without allowlist validation. All WizardProfile enum fields must match their closed set before `JSON.stringify` injection.
+- **Response header size limit:** HTTP response headers cap at ~8KB via Vercel proxy. Do not use headers as a transport for structured JSON objects. Profile is currently delivered via header (works for small payloads) — long-term fix is a GET /api/agents/design-wizard/profile endpoint.
+- **parseSignalsFromMessages:** Exported from route.ts. 26 Vitest tests in `route.test.ts`. Budget regex requires `$` sign OR explicit budget keyword — bare numbers match unintentionally (documented in tests, not yet fixed).
+- **code-review-swarm plugin:** Registered in `~/.claude/plugins/installed_plugins.json`. Invoke via `Skill("code-review-swarm")`. Runs 5 specialist reviewer agents in parallel, triages, fixes, writes report to `code-review-swarm-report.md`.
 
 ---
 

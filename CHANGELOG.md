@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-04-13 — Sprint 4-A: Production Unblock + Wizard Sprint v2 Close-Out
+
+**Branch:** `master`
+
+### What Was Done
+
+**Task 4-A.1 — Wizard fixes pushed to production**
+- Pushed master (wizard sprint v2 code-review-swarm fixes, commit 4e2b4fa)
+- Fixed LLM echoing `## Current profile state` block — added INTERNAL CONTEXT instruction to design_wizard system prompt
+- Smoke-tested: manager agent streaming PASS, wizard agent streaming + X-Wizard-Profile header PASS
+
+**Task 4-A.2 — Production env verified**
+- Confirmed ANTHROPIC_API_KEY in Vercel production (set 9 days ago, encrypted)
+- No redeploy needed — agents live and responding with real streaming content
+
+### Files Modified
+- `web/lib/agents/system-prompts.ts` — INTERNAL CONTEXT instruction added to design_wizard prompt
+
+### Wizard Sprint v2 — CLOSED
+All 18 code-review-swarm bugs fixed and live. X-Wizard-Profile {} root cause resolved via after(). Sprint fully closed.
+
+---
+
 ## 2026-04-02 — Sprint 3: Math Engine + Workspace Results UI
 
 **Branch:** `master`
@@ -139,3 +162,44 @@ Phases 1–4 merged to master: Next.js foundation, knowledge pipeline (23 ChatGP
 
 ### Open
 - `X-Wizard-Profile` header returning `{}` in production — debug log added, investigation pending on resume
+
+---
+
+## 2026-04-06 — Wizard Sprint v2: Code Review Swarm
+
+**Commit:** 4e2b4fa | **Method:** code-review-swarm (5 reviewers → 20 bugs found → 18 fixed)
+
+### Fixed
+
+**Critical**
+- `onFinish` writeMemory now wrapped in `after()` from `next/server` — root cause of `X-Wizard-Profile {}` bug. Vercel function was tearing down before the DB write completed.
+
+**High**
+- `readMemory` now key-filtered (`key === 'wizard_profile'`) — was loading whatever row came back first
+- `writeMemory` upsert wrapped in `db.transaction()` — atomic, no concurrent duplicate-key crash
+- Budget guard `&&` → `||` — user budget corrections mid-conversation now applied
+- `experience_level` runs across all messages for ceiling score (was write-once on first match)
+- Prompt injection fix: all 7 profile signals validated against closed enum allowlists before system prompt injection
+- Debug `console.log` with raw user content gated behind `NODE_ENV !== 'production'`
+- `m.content ?? ''` null guard in `parseSignalsFromMessages` — was throwing uncaught TypeError
+
+**Medium**
+- `X-Wizard-Profile` parse failure now `console.warn`s with raw header value (diagnosable)
+- `wizardActiveRef` dual-write documented with React render-cycle timing comment
+
+**Low / Style**
+- `stripPrivateFields()` helper replaces dual `experience_level` destructuring
+- `EXPERT_TERMS` / `INTERMEDIATE_TERMS` hoisted to module-level constants
+- `WIZARD_PROMPT` constant used in `STARTER_PROMPTS[0]` (was duplicate string literal)
+- `wizardProfile` state typed as `WizardProfile | null` — removed unsafe `as` casts
+- `BASE_CONTEXT` prepended to `design_wizard` system prompt (was only agent missing it)
+
+### Added
+- `web/app/api/agents/design-wizard/route.test.ts` — 26 Vitest tests for signal extraction
+- `web/vitest.config.ts` — Vitest config
+- `code-review-swarm-report.md` — full audit report
+- `code-review-swarm` registered in `~/.claude/plugins/installed_plugins.json`
+
+### Deferred
+- SEC-2: auth/IDOR on wizard endpoint → Phase 6
+- FE-4: per-message domain badge → Wizard v3
