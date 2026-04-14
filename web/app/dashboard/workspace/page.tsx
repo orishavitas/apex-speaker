@@ -75,9 +75,13 @@ function MonoInput({ label, unit, value, onChange }: {
 function HornLoadingPanel({
   variant,
   onChange,
+  hornConfig = {},
+  onHornChange,
 }: {
   variant: LoadingVariant;
   onChange: (v: LoadingVariant) => void;
+  hornConfig?: Record<string, number>;
+  onHornChange?: (key: string, value: number) => void;
 }) {
   const isHorn = ['tractrix', 'exponential', 'conical', 'oblate_spheroidal', 'le_cleach'].includes(variant);
   const isWG = variant === 'waveguide';
@@ -106,27 +110,27 @@ function HornLoadingPanel({
 
       {isHorn && (
         <div className="border-t border-zinc-800 pt-2 space-y-0">
-          <MonoInput label="throat ⌀" unit="mm" />
-          <MonoInput label="mouth ⌀"  unit="mm" />
-          <MonoInput label="length"   unit="mm" />
-          <MonoInput label="cutoff Fc" unit="Hz" />
-          <MonoInput label="coverage H" unit="°" />
-          <MonoInput label="coverage V" unit="°" />
+          <MonoInput label="throat ⌀" unit="mm" value={hornConfig['throat_mm']} onChange={v => onHornChange?.('throat_mm', v)} />
+          <MonoInput label="mouth ⌀"  unit="mm" value={hornConfig['mouth_mm']}  onChange={v => onHornChange?.('mouth_mm', v)} />
+          <MonoInput label="length"   unit="mm" value={hornConfig['length_mm']} onChange={v => onHornChange?.('length_mm', v)} />
+          <MonoInput label="cutoff Fc" unit="Hz" value={hornConfig['cutoff_hz']} onChange={v => onHornChange?.('cutoff_hz', v)} />
+          <MonoInput label="coverage H" unit="°" value={hornConfig['coverage_h_deg']} onChange={v => onHornChange?.('coverage_h_deg', v)} />
+          <MonoInput label="coverage V" unit="°" value={hornConfig['coverage_v_deg']} onChange={v => onHornChange?.('coverage_v_deg', v)} />
         </div>
       )}
       {isWG && (
         <div className="border-t border-zinc-800 pt-2 space-y-0">
-          <MonoInput label="coverage H" unit="°" />
-          <MonoInput label="coverage V" unit="°" />
-          <MonoInput label="throat ⌀"  unit="mm" />
-          <MonoInput label="depth"     unit="mm" />
+          <MonoInput label="coverage H" unit="°"  value={hornConfig['coverage_h_deg']} onChange={v => onHornChange?.('coverage_h_deg', v)} />
+          <MonoInput label="coverage V" unit="°"  value={hornConfig['coverage_v_deg']} onChange={v => onHornChange?.('coverage_v_deg', v)} />
+          <MonoInput label="throat ⌀"  unit="mm" value={hornConfig['throat_mm']}       onChange={v => onHornChange?.('throat_mm', v)} />
+          <MonoInput label="depth"     unit="mm" value={hornConfig['depth_mm']}         onChange={v => onHornChange?.('depth_mm', v)} />
         </div>
       )}
       {isTL && (
         <div className="border-t border-zinc-800 pt-2 space-y-0">
-          <MonoInput label="length"   unit="mm" />
-          <MonoInput label="line ⌀"   unit="mm" />
-          <MonoInput label="stuffing" unit="kg/m³" />
+          <MonoInput label="length"   unit="mm"    value={hornConfig['length_mm']}            onChange={v => onHornChange?.('length_mm', v)} />
+          <MonoInput label="line ⌀"   unit="mm"    value={hornConfig['line_diameter_mm']}     onChange={v => onHornChange?.('line_diameter_mm', v)} />
+          <MonoInput label="stuffing" unit="kg/m³" value={hornConfig['stuffing_density']}     onChange={v => onHornChange?.('stuffing_density', v)} />
         </div>
       )}
     </div>
@@ -226,9 +230,12 @@ function HornResults({ ts, slot }: { ts: ThieleSmallParams; slot: WaySlot }) {
   const isHornProfile = ['tractrix','exponential','conical','oblate_spheroidal','le_cleach'].includes(loading.variant);
   if (!isHornProfile) return null;
 
-  // Need mouth_area_cm2 and throat_area_cm2 — if not filled in yet, show placeholder
-  const hornConfig = loading as { variant: HornProfile; mouth_area_cm2?: number; throat_area_cm2?: number };
-  if (!hornConfig.mouth_area_cm2 || !hornConfig.throat_area_cm2) {
+  // Fields stored as diameter (mm); convert to area (cm²) for math engine
+  const dims = loading as Record<string, unknown>;
+  const throatMm = typeof dims['throat_mm'] === 'number' ? dims['throat_mm'] as number : null;
+  const mouthMm  = typeof dims['mouth_mm']  === 'number' ? dims['mouth_mm']  as number : null;
+
+  if (!throatMm || !mouthMm) {
     return (
       <div className="mt-3 border border-zinc-800/60 rounded p-2 bg-zinc-900/40">
         <div className="font-mono text-xs text-violet-400 mb-1">Horn Analysis</div>
@@ -237,14 +244,19 @@ function HornResults({ ts, slot }: { ts: ThieleSmallParams; slot: WaySlot }) {
     );
   }
 
+  // diameter mm → radius cm → area cm²
+  const throatAreaCm2 = Math.PI * Math.pow(throatMm / 20, 2);
+  const mouthAreaCm2  = Math.PI * Math.pow(mouthMm  / 20, 2);
+
+  const variant = (loading as { variant: HornProfile }).variant;
   const res: HornResult = calcHornLoading(ts, {
-    variant: hornConfig.variant as HornProfile,
-    throat_area_cm2: hornConfig.throat_area_cm2,
-    mouth_area_cm2: hornConfig.mouth_area_cm2,
-    length_mm: (hornConfig as { length_mm?: number }).length_mm ?? 300,
-    cutoff_hz: (hornConfig as { cutoff_hz?: number }).cutoff_hz ?? 0,
-    coverage_h_deg: (hornConfig as { coverage_h_deg?: number }).coverage_h_deg ?? 90,
-    coverage_v_deg: (hornConfig as { coverage_v_deg?: number }).coverage_v_deg ?? 60,
+    variant,
+    throat_area_cm2: throatAreaCm2,
+    mouth_area_cm2:  mouthAreaCm2,
+    length_mm:       typeof dims['length_mm']      === 'number' ? dims['length_mm']      as number : 300,
+    cutoff_hz:       typeof dims['cutoff_hz']       === 'number' ? dims['cutoff_hz']       as number : 0,
+    coverage_h_deg:  typeof dims['coverage_h_deg']  === 'number' ? dims['coverage_h_deg']  as number : 90,
+    coverage_v_deg:  typeof dims['coverage_v_deg']  === 'number' ? dims['coverage_v_deg']  as number : 60,
   });
 
   return (
@@ -428,9 +440,13 @@ function WayCard({
           {/* Horn / loading */}
           <HornLoadingPanel
             variant={loadingVariant}
+            hornConfig={slot.loading as unknown as Record<string, number>}
             onChange={(v) => {
               setLoadingVariant(v);
-              onWayChange?.(index, { loading: { variant: v } as WaySlot['loading'] });
+              onWayChange?.(index, { loading: { ...slot.loading, variant: v } as WaySlot['loading'] });
+            }}
+            onHornChange={(key, value) => {
+              onWayChange?.(index, { loading: { ...slot.loading, [key]: value } as WaySlot['loading'] });
             }}
           />
         </div>
