@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## 2026-04-14 — Sprint 4-C: Workspace Enhancements
+
+**Branch:** `master`
+
+### What Was Done
+
+**4-C.1 — WizardPane signals**
+Added `room_size` and `amplifier` rows to WizardPane. `PublicProfile` interface updated. Pane now shows 6 public signals: BUDGET, PLACEMENT, USE CASE, SOUND SIG, ROOM SIZE, AMPLIFIER.
+
+**4-C.2 — Horn dimension persistence**
+Extended `HornLoadingPanel` with `hornConfig`/`onHornChange` props. All MonoInput fields (throat, mouth, length, cutoff, coverage for horn; throat, depth, coverage for waveguide; length, diameter, stuffing for TL) now wired to `onWayChange` and persisted via `useDesignStatePersistence`. `HornResults` fixed to convert stored diameter (mm) → area (cm²) before passing to `calcHornLoading`.
+
+**4-C.3 — Workspace chat wiring**
+Replaced dead `WorkspaceChat` stub with real `useChat` + `DefaultChatTransport` → `/api/agents/manager`. Messages rendered via `MessageBubble` (text extracted from `msg.parts`). Domain badge driven by `X-Routed-Domain` response header. Input disabled while streaming. Also fixed pre-existing backtick parse error in `system-prompts.ts` that was blocking the Vitest test runner.
+
+### Files Modified
+- `web/components/apex/chat/wizard-pane.tsx`
+- `web/app/dashboard/workspace/page.tsx`
+- `web/lib/agents/system-prompts.ts` (parse error fix)
+
+---
+
 ## 2026-04-13 — Sprint 4-A: Production Unblock + Wizard Sprint v2 Close-Out
 
 **Branch:** `master`

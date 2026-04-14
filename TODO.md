@@ -74,6 +74,14 @@
 
 ---
 
+## Sprint 4-C — COMPLETE (2026-04-14)
+- [x] WizardPane: room_size + amplifier signals (6 rows visible)
+- [x] Horn dimension persistence: all MonoInput fields wired + diameter→area conversion
+- [x] WorkspaceChat: real useChat wiring, MessageBubble rendering, domain badge
+- [x] Fix backtick parse error in system-prompts.ts (was blocking Vitest)
+
+---
+
 ## Sprint 4 Candidates
 
 ### Workspace Enhancements

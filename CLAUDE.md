@@ -69,13 +69,27 @@ All phases + sprints merged into `master`. **Production is live.**
 
 ## Next Steps
 
-### Sprint 4-B: Driver Database Population
-Run Playwright scraper against loudspeakerdatabase.com to populate driver_database with ~400 drivers (woofer/tweeter/midrange/subwoofer). Script ready: `web/scripts/scrape-loudspeakerdb-playwright.ts`. Full plan: `docs/superpowers/plans/2026-04-04-unblock-production.md` Task 2.
+### Sprint 4-C — COMPLETE (2026-04-14)
+- WizardPane: 6 public signals (budget, placement, use_case, sound_sig, room_size, amplifier)
+- Horn dimension persistence: all MonoInput fields wired + persist via useDesignStatePersistence
+- Workspace chat (Col 3): fully wired via useChat + DefaultChatTransport → /api/agents/manager
 
-### Sprint 4-C candidates (next after 4-B):
-- Workspace chat wiring (Col 3 static input → real useChat)
-- Horn dimension persistence
-- Per-message domain badge (FE-4)
+### Sprint 4-D candidates:
+- Live SPL frequency plot in workspace
+- Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
+- T/S param edit modal (driver DB)
+- Per-message domain badge (FE-4) — needs AI SDK message ID at fetch time
+- CSV import endpoint for driver bulk-load
+
+### Phase 6 Wishlist
+- Project memory UI
+- Knowledge search at /knowledge
+- Sources page at /sources
+- New chat button
+- Domain badge animation
+- Theme toggle
+- Rename Vercel project from "web" to "apex-speaker" (cosmetic)
+- Auth / IDOR hardening (SEC-2)
 
 ---
 
