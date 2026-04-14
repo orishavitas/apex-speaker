@@ -71,15 +71,21 @@ function WorkspaceChat({ domain: _domain }: { domain: string }) {
             ask the agent about your design...
           </div>
         )}
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            role={msg.role as 'user' | 'assistant'}
-            content={typeof msg.content === 'string' ? msg.content : ''}
-            domain={msg.role === 'assistant' ? routedDomain : undefined}
-            isStreaming={msg.role === 'assistant' && isStreaming && msg.id === messages[messages.length - 1]?.id}
-          />
-        ))}
+        {messages.map((msg) => {
+          const text = msg.parts
+            ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+            .map(p => p.text)
+            .join('') ?? '';
+          return (
+            <MessageBubble
+              key={msg.id}
+              role={msg.role as 'user' | 'assistant'}
+              content={text}
+              domain={msg.role === 'assistant' ? routedDomain : undefined}
+              isStreaming={msg.role === 'assistant' && isStreaming && msg.id === messages[messages.length - 1]?.id}
+            />
+          );
+        })}
         <div ref={bottomRef} />
       </div>
       <div className="p-3 border-t border-zinc-800">
@@ -293,7 +299,7 @@ function HornResults({ ts, slot }: { ts: ThieleSmallParams; slot: WaySlot }) {
   if (!isHornProfile) return null;
 
   // Fields stored as diameter (mm); convert to area (cm²) for math engine
-  const dims = loading as Record<string, unknown>;
+  const dims = loading as unknown as Record<string, unknown>;
   const throatMm = typeof dims['throat_mm'] === 'number' ? dims['throat_mm'] as number : null;
   const mouthMm  = typeof dims['mouth_mm']  === 'number' ? dims['mouth_mm']  as number : null;
 
