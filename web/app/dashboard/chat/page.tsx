@@ -74,8 +74,8 @@ export default function ChatPage() {
             const api = wizardActiveRef.current
               ? "/api/agents/design-wizard"
               : "/api/agents/manager";
-            const resolvedUrl = url.toString().replace("/api/agents/manager", api);
-            const response = await globalThis.fetch(resolvedUrl, init);
+            // Pass `api` directly — URL rewrite via string replace is fragile against absolute URLs
+            const response = await globalThis.fetch(api, init);
             const domain = response.headers.get("X-Routed-Domain") as AgentDomain | null;
             if (domain) setRoutedDomain(domain);
             const rawProfile = response.headers.get("X-Wizard-Profile");

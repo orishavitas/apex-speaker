@@ -24,23 +24,24 @@ export interface ProjectedBuild {
   cabinet_budget_usd: number;
 }
 
-/** Count how many signals are captured with reasonable confidence.
- *  Requires 5 of the 7 possible signals (budget counts as 1 if either bound is set). */
+/** Count how many user-provided signals are captured.
+ *  experience_level is intentionally excluded — it is always auto-inferred and must not
+ *  count toward the gate or it fires prematurely on turn 1.
+ *  Max score: 6. Gate fires at >= 4. */
 export function profileConfidence(p: WizardProfile): number {
   let count = 0;
   if (p.budget_low !== undefined || p.budget_high !== undefined) count++;
   if (p.placement) count++;
   if (p.use_case) count++;
   if (p.sound_signature) count++;
-  if (p.experience_level !== undefined) count++;
   if (p.room_size) count++;
   if (p.amplifier) count++;
   return count;
 }
 
-/** True when wizard has enough to fire the confirmation gate (5 of 7 signals) */
+/** True when wizard has enough to fire the confirmation gate (4 of 6 user-provided signals) */
 export function isProfileComplete(p: WizardProfile): boolean {
-  return profileConfidence(p) >= 5;
+  return profileConfidence(p) >= 4;
 }
 
 /** Derive a projected build from the profile.

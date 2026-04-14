@@ -370,7 +370,9 @@ export async function POST(req: NextRequest) {
       "Fetch profile via GET /api/agents/design-wizard/profile as fallback."
     );
   }
-  console.log("[design-wizard] X-Wizard-Profile payload:", publicProfileJson);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[design-wizard] X-Wizard-Profile payload:", publicProfileJson);
+  }
   headers.set("X-Wizard-Profile", publicProfileJson);
 
   return new Response(response.body, { headers });
