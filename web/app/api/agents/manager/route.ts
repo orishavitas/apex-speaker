@@ -56,15 +56,18 @@ export async function POST(req: NextRequest) {
       .join("") ?? "";
 
   // Wizard session detection — scan ALL user messages for the sentinel token.
-  // AI SDK v6 UIMessage stores text in parts[], not content — must check both.
-  const extractText = (m: ChatMessage): string => {
-    if (m.content) return m.content as string;
-    const parts = (m as unknown as { parts?: { type: string; text?: string }[] }).parts;
-    return parts?.filter(p => p.type === "text").map(p => p.text ?? "").join("") ?? "";
+  // AI SDK v6 UIMessage may send text in parts[] OR content string — check both.
+  const getMsgText = (m: ChatMessage): string => {
+    const raw = m as unknown as { content?: unknown; parts?: { type: string; text?: string }[] };
+    if (typeof raw.content === "string" && raw.content) return raw.content;
+    if (Array.isArray(raw.parts)) {
+      return raw.parts.filter(p => p.type === "text").map(p => p.text ?? "").join("");
+    }
+    return "";
   };
 
   const isWizardSession = messages.some(
-    (m: ChatMessage) => m.role === "user" && extractText(m).includes("__WIZARD_TRIGGER__")
+    (m: ChatMessage) => m.role === "user" && getMsgText(m).includes("__WIZARD_TRIGGER__")
   );
 
   if (isWizardSession) {

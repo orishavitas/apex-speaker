@@ -188,7 +188,9 @@ export default function ChatPage() {
             const content = msg.parts
               .filter((p): p is { type: "text"; text: string } => p.type === "text")
               .map((p) => p.text)
-              .join("");
+              .join("")
+              .replace(/__WIZARD_TRIGGER__\s*/g, "")
+              .trim();
 
             return (
               <MessageBubble

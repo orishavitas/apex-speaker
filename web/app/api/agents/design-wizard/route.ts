@@ -90,7 +90,7 @@ export function parseSignalsFromMessages(
     // AFTER: const text = (m.content ?? '').toLowerCase()
     // VALIDATION-LAYER: entry — message shape not validated before string access
     // TEST: test_parse_signals_handles_null_content
-    const text = (m.content ?? "").toLowerCase();
+    const text = extractText(m).toLowerCase();
 
     // Budget: look for dollar amounts
     // [CRS:LogicDoc:2026-04-06] BUG-ORIGIN: BH-3 — budget guard blocks re-extraction once either bound is set
