@@ -55,9 +55,15 @@ export async function POST(req: NextRequest) {
       .map((p) => p.text ?? "")
       .join("") ?? "";
 
-  // Explicit wizard trigger — starter prompt injects this sentinel token
-  // Body was already consumed above, so reconstruct a new Request with the parsed body
-  if (query.includes("__WIZARD_TRIGGER__")) {
+  // Wizard session detection — two paths:
+  // 1. Explicit trigger token in current message (turn 1)
+  // 2. Any prior user message contains the trigger (turns 2+, session continuity)
+  const isWizardSession = messages.some(
+    (m: ChatMessage) => (m.role === "user") &&
+      ((m.content ?? "") as string).includes("__WIZARD_TRIGGER__")
+  );
+
+  if (isWizardSession) {
     const { POST: wizardPost } = await import("../design-wizard/route");
     const clonedReq = new NextRequest(req.url, {
       method: req.method,
