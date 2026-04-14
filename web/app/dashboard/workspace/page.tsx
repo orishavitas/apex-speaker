@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo, useRef, useCallback } from 'react';
+import { Chat, useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { MessageBubble } from '@/components/apex/chat/message-bubble';
+import type { AgentDomain } from '@/lib/agents/types';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -20,18 +24,76 @@ import {
 import type { HornProfile } from '@/lib/types/speaker-domain';
 
 // ── Mini chat for workspace ──────────────────────────────────────────────────
-function WorkspaceChat({ domain }: { domain: string }) {
+function WorkspaceChat({ domain: _domain }: { domain: string }) {
+  const [routedDomain, setRoutedDomain] = useState<AgentDomain>('manager');
+  const [inputValue, setInputValue] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const chat = useMemo(
+    () =>
+      new Chat({
+        transport: new DefaultChatTransport({
+          api: '/api/agents/manager',
+          fetch: async (url, init) => {
+            const response = await globalThis.fetch(url, init);
+            const domain = response.headers.get('X-Routed-Domain') as AgentDomain | null;
+            if (domain) setRoutedDomain(domain);
+            return response;
+          },
+        }),
+      }),
+    []
+  );
+
+  const { messages, sendMessage, status } = useChat({ chat });
+  const isStreaming = status === 'streaming' || status === 'submitted';
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey && inputValue.trim() && !isStreaming) {
+        e.preventDefault();
+        sendMessage({ text: inputValue.trim() });
+        setInputValue('');
+      }
+    },
+    [inputValue, isStreaming, sendMessage]
+  );
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        <div className="text-xs font-mono text-zinc-500 text-center pt-8">
-          Ask the {domain} agent about your design...
-        </div>
+        {messages.length === 0 && (
+          <div className="text-xs font-mono text-zinc-600 text-center pt-8">
+            ask the agent about your design...
+          </div>
+        )}
+        {messages.map((msg) => (
+          <MessageBubble
+            key={msg.id}
+            role={msg.role as 'user' | 'assistant'}
+            content={typeof msg.content === 'string' ? msg.content : ''}
+            domain={msg.role === 'assistant' ? routedDomain : undefined}
+            isStreaming={msg.role === 'assistant' && isStreaming && msg.id === messages[messages.length - 1]?.id}
+          />
+        ))}
+        <div ref={bottomRef} />
       </div>
       <div className="p-3 border-t border-zinc-800">
         <input
-          className="w-full bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm font-mono text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-500"
-          placeholder="ask about this design..."
+          className={`w-full bg-zinc-900 border rounded px-3 py-2 text-sm font-mono text-zinc-200 placeholder-zinc-600 outline-none transition-colors ${
+            isStreaming
+              ? 'border-zinc-800 text-zinc-600 cursor-not-allowed'
+              : 'border-zinc-700 focus:border-zinc-500'
+          }`}
+          placeholder={isStreaming ? 'responding...' : 'ask about this design...'}
+          value={inputValue}
+          onChange={e => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isStreaming}
         />
       </div>
     </div>
