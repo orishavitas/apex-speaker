@@ -6,6 +6,8 @@ interface PublicProfile {
   placement?: string;
   use_case?: string;
   sound_signature?: string;
+  room_size?: string;
+  amplifier?: string;
 }
 
 interface ProjectedBuild {
@@ -52,6 +54,8 @@ export function WizardPane({ profile, build }: WizardPaneProps) {
         <PaneRow label="PLACEMENT" value={profile?.placement ?? "···"} />
         <PaneRow label="USE CASE"  value={profile?.use_case ?? "···"} />
         <PaneRow label="SOUND SIG" value={profile?.sound_signature ?? "···"} />
+        <PaneRow label="ROOM SIZE" value={profile?.room_size ?? "···"} />
+        <PaneRow label="AMPLIFIER" value={profile?.amplifier ?? "···"} />
       </div>
 
       {/* Projected build */}
