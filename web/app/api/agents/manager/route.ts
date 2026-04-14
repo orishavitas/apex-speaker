@@ -55,12 +55,16 @@ export async function POST(req: NextRequest) {
       .map((p) => p.text ?? "")
       .join("") ?? "";
 
-  // Wizard session detection — two paths:
-  // 1. Explicit trigger token in current message (turn 1)
-  // 2. Any prior user message contains the trigger (turns 2+, session continuity)
+  // Wizard session detection — scan ALL user messages for the sentinel token.
+  // AI SDK v6 UIMessage stores text in parts[], not content — must check both.
+  const extractText = (m: ChatMessage): string => {
+    if (m.content) return m.content as string;
+    const parts = (m as unknown as { parts?: { type: string; text?: string }[] }).parts;
+    return parts?.filter(p => p.type === "text").map(p => p.text ?? "").join("") ?? "";
+  };
+
   const isWizardSession = messages.some(
-    (m: ChatMessage) => (m.role === "user") &&
-      ((m.content ?? "") as string).includes("__WIZARD_TRIGGER__")
+    (m: ChatMessage) => m.role === "user" && extractText(m).includes("__WIZARD_TRIGGER__")
   );
 
   if (isWizardSession) {
