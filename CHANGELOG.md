@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-04-14 — Wizard Sprint v3: Turn-2 Routing Fix + Opening Q Redesign
+
+**Branch:** `master` | **Commit:** da27f9f
+
+### Root Cause
+Wizard sessions were escaping on turn 2. The `fetch` closure in `chat/page.tsx` used `url.toString().replace("/api/agents/manager", api)` to rewrite the endpoint — but `DefaultChatTransport` passes an absolute URL in production, so the substring replace silently failed. Turn-2 messages always went to `/api/agents/manager`, which has no session awareness and fell through to the `research` default.
+
+### Fixes
+
+**[Critical] Turn-2 routing restored**
+- `web/app/dashboard/chat/page.tsx` — replaced fragile URL rewrite with `globalThis.fetch(api, init)` — passes the resolved endpoint directly, bypasses the broken replace entirely
+
+**[Critical] experience_level removed from completion gate**
+- `web/lib/agents/wizard-profile.ts` — `profileConfidence()` no longer counts `experience_level` (always auto-inferred, was inflating gate score). Max score now 6. Gate fires at >= 4.
+
+**[Product] Free-text opening question**
+- `web/lib/agents/system-prompts.ts` — wizard now opens with "Tell me about the speaker you want to build — style, size, intended use, room, anything you have in mind." instead of budget-first. Expert shortcut: if user gives multiple signals in one message, extract all and ask about the most important missing one.
+
+**[High] Production console.log gated**
+- `web/app/api/agents/design-wizard/route.ts` — X-Wizard-Profile log now wrapped in `NODE_ENV !== "production"` guard
+
+---
+
 ## 2026-04-14 — Sprint 4-C: Workspace Enhancements
 
 **Branch:** `master`

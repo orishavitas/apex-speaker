@@ -147,6 +147,8 @@ All phases + sprints merged into `master`. **Production is live.**
 - **Prompt injection guard:** Never inject user-derived strings into system prompts without allowlist validation. All WizardProfile enum fields must match their closed set before `JSON.stringify` injection.
 - **Response header size limit:** HTTP response headers cap at ~8KB via Vercel proxy. Do not use headers as a transport for structured JSON objects. Profile is currently delivered via header (works for small payloads) — long-term fix is a GET /api/agents/design-wizard/profile endpoint.
 - **parseSignalsFromMessages:** Exported from route.ts. 26 Vitest tests in `route.test.ts`. Budget regex requires `$` sign OR explicit budget keyword — bare numbers match unintentionally (documented in tests, not yet fixed).
+- **Wizard fetch routing:** The `DefaultChatTransport` fetch closure in `chat/page.tsx` must pass `api` directly to `globalThis.fetch(api, init)` — do NOT use `url.toString().replace(...)`. In production, `DefaultChatTransport` passes an absolute URL; string replace against a relative path silently fails and the wizard session escapes to manager on turn 2.
+- **Wizard gate:** `profileConfidence()` counts 6 user-provided signals (budget, placement, use_case, sound_signature, room_size, amplifier). `experience_level` is excluded — always auto-inferred, must not inflate the gate. Gate fires at >= 4 of 6.
 - **code-review-swarm plugin:** Registered in `~/.claude/plugins/installed_plugins.json`. Invoke via `Skill("code-review-swarm")`. Runs 5 specialist reviewer agents in parallel, triages, fixes, writes report to `code-review-swarm-report.md`.
 
 ---
