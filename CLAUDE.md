@@ -166,3 +166,49 @@ All phases + sprints merged into `master`. **Production is live.**
 
 URL: https://notebooklm.google.com/notebook/59cf7942-cf9f-459e-9b3c-46b0702f026c
 Contains: all 23 ingested speaker design conversation exports
+---
+
+## Nexus Harness
+
+This repo is wired into the Nexus agentic development system.
+
+**Dispatch source:** `.agent-harness/inbox/` — task packets land here. Agents do not read monday.com for dispatch.
+**Writeback:** `.agent-harness/outbox/{task-id}.result.md` — every task ends with a populated result file.
+**Evidence:** `.agent-harness/artifacts/{task-id}/` — test output, verification logs.
+**Monitor:** Run `python C:/Users/OriShavit/Documents/GitHub/project_nexus/monitor/monitor.py` to countersign completed results.
+**Schema:** `.agent-harness/config/manifest/schema.yaml` — 9 task types, evidence requirements.
+
+### Session Start Protocol
+
+1. Read `MEMORY.md` — current state, key decisions, blockers
+2. Read `TODO.md` — what's next and current phase
+3. Check `.agent-harness/inbox/` for any active task packet
+4. Read `legion-vault/projects/apex-speaker/index.md` for sprint state
+
+### Vault Ingest (Automatic)
+
+Every session triggers vault ingest at Stop via `session_stop.py` → `vault_ingest_agent.py`.
+
+**What gets written:**
+- `raw/repos/apex-speaker/{date}/` — immutable quartet copy (never overwrites)
+- `projects/apex-speaker/index.md` — rewritten with current sprint state
+- `system/index.md` — cross-repo row update
+- `system/ingest-log.md` — append-only entry
+
+**Verify:** `tail -5 .agent-harness/logs/vault-ingest.ndjson` — look for `vault_ingest_complete`
+
+**Manual re-run:**
+```bash
+python C:\Users\OriShavit\Documents\GitHub\project_nexus\scripts\vault_ingest_agent.py --runtime claude --session-id manual --repo-path C:\Users\OriShavit\Documents\GitHub\apex-speaker
+```
+
+**Constraint:** Never write directly to `system/`, `projects/`, or `raw/repos/` in the vault. Only `vault_ingest_agent.py` writes there.
+
+### Completion Anchors
+
+Every completed task must update before claiming done:
+- `TODO.md` — mark completed work, set next actionable item
+- `MEMORY.md` — refresh current state, latest verified task, blockers
+- `CHANGELOG.md` — add dated entry for what changed
+
+Name the completing agent and session date in each update.
