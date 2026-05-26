@@ -1,0 +1,220 @@
+# Evidence Manifest Schema
+# Version: 1.0
+# Date: 2026-04-27
+#
+# This is the contract the verification monitor enforces.
+# Every task type must have a manifest entry before execution begins.
+# The monitor countersigns only when all checks in the manifest pass.
+#
+# Adding a new task type:
+#   1. Add an entry under task_types
+#   2. Define required_artifacts with specific checks
+#   3. Set timeout_minutes appropriate to task complexity
+#   4. Commit this file before the task packet is created
+
+version: "1.0"
+
+# Global rules applied to ALL task types
+global:
+  # These fields must be present and non-empty in every result file
+  required_result_fields:
+    - summary
+    - changed_files
+    - commands_run
+    - results
+    - risks
+    - follow_ups
+    - monday_update
+
+  # These strings must NOT appear in any result file (indicates incomplete work)
+  forbidden_placeholders:
+    - "TBD"
+    - "TODO"
+    - "placeholder"
+    - "PLACEHOLDER"
+    - "Fill this in"
+    - "Coming soon"
+
+  # Result file must be written within this window after task packet is created
+  max_task_age_hours: 48
+
+# Per-task-type evidence requirements
+task_types:
+
+  # ── Code Implementation ──────────────────────────────────────────────────
+  code_implementation:
+    description: "Writing new code, features, or non-trivial logic"
+    timeout_minutes: 120
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, changed_files, commands_run, results, risks]
+          - no_placeholders: true
+          - min_length_chars: 200
+
+      - path: "artifacts/{task_id}/test_results.txt"
+        checks:
+          - exists: true
+          - not_contains: ["FAILED", "ERROR", "error:"]
+          - contains_one_of: ["passed", "ok", "success", "PASS"]
+
+    optional_artifacts:
+      - path: "artifacts/{task_id}/coverage.txt"
+        if_present_checks:
+          - min_coverage_percent: 60
+
+    git_checks:
+      - branch_exists: true
+      - has_commits: true
+      - no_uncommitted_changes: true
+
+  # ── Bug Fix ──────────────────────────────────────────────────────────────
+  bug_fix:
+    description: "Fixing a specific defect with a known root cause"
+    timeout_minutes: 60
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, changed_files, commands_run, results, risks]
+          - no_placeholders: true
+          - contains: ["root cause"]
+
+      - path: "artifacts/{task_id}/test_results.txt"
+        checks:
+          - exists: true
+          - not_contains: ["FAILED", "ERROR"]
+          - contains: ["passed"]
+
+    git_checks:
+      - branch_exists: true
+      - has_commits: true
+
+  # ── Refactor ─────────────────────────────────────────────────────────────
+  refactor:
+    description: "Restructuring existing code without changing behavior"
+    timeout_minutes: 90
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, changed_files, commands_run, results, risks]
+          - no_placeholders: true
+
+      - path: "artifacts/{task_id}/test_results.txt"
+        checks:
+          - exists: true
+          - not_contains: ["FAILED", "ERROR"]
+          - contains: ["passed"]
+
+      - path: "artifacts/{task_id}/diff_summary.txt"
+        checks:
+          - exists: true
+          - min_length_chars: 50
+
+    git_checks:
+      - branch_exists: true
+      - has_commits: true
+      - no_uncommitted_changes: true
+
+  # ── Documentation ────────────────────────────────────────────────────────
+  documentation:
+    description: "Writing or updating docs, wiki pages, specs, READMEs"
+    timeout_minutes: 60
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, changed_files, results]
+          - no_placeholders: true
+          - min_length_chars: 100
+
+    optional_artifacts:
+      - path: "artifacts/{task_id}/wiki_updates.md"
+        if_present_checks:
+          - min_length_chars: 50
+
+  # ── Code Review ──────────────────────────────────────────────────────────
+  code_review:
+    description: "Claude evaluating Codex output against acceptance criteria"
+    timeout_minutes: 30
+    required_artifacts:
+      - path: "reviews/{task_id}.review.md"
+        checks:
+          - exists: true
+          - fields_present: [verdict, criteria_results, defects, recommendation]
+          - no_placeholders: true
+          - contains_one_of: ["APPROVED", "NEEDS_CHANGES", "REJECTED"]
+
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+
+  # ── Research / Investigation ──────────────────────────────────────────────
+  research:
+    description: "Exploring unknowns, gathering information, producing a brief"
+    timeout_minutes: 90
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, results, risks, follow_ups]
+          - no_placeholders: true
+          - min_length_chars: 300
+
+    optional_artifacts:
+      - path: "artifacts/{task_id}/sources.md"
+        if_present_checks:
+          - min_length_chars: 50
+
+  # ── Infrastructure / Config ───────────────────────────────────────────────
+  infrastructure:
+    description: "Setting up tools, environments, configs, CI, scripts"
+    timeout_minutes: 60
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, changed_files, commands_run, results, risks]
+          - no_placeholders: true
+
+      - path: "artifacts/{task_id}/verification.txt"
+        checks:
+          - exists: true
+          - not_contains: ["failed", "error", "Error"]
+
+    git_checks:
+      - has_commits: true
+
+  # ── Sprint Planning ───────────────────────────────────────────────────────
+  sprint_planning:
+    description: "Claude decomposing a goal into a set of scoped task packets"
+    timeout_minutes: 45
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, results]
+          - no_placeholders: true
+
+      - path: "artifacts/{task_id}/task_packets/"
+        checks:
+          - directory_exists: true
+          - min_files: 1
+
+  # ── Vault Ingest ─────────────────────────────────────────────────────────
+  vault_ingest:
+    description: "Mapper agent: ingest a repo session into the legion-vault"
+    timeout_minutes: 15
+    required_artifacts:
+      - path: "outbox/{task_id}.result.md"
+        checks:
+          - exists: true
+          - fields_present: [summary, changed_files, results]
+          - no_placeholders: true
+
+      - path: "logs/vault-ingest.ndjson"
+        checks:
+          - exists: true
+          - contains_one_of: ["vault_ingest_complete"]
