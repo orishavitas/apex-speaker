@@ -1,7 +1,7 @@
-# Graph Report - C:\Users\OriShavit\Documents\GitHub\apex-speaker  (2026-05-06)
+# Graph Report - C:\Users\OriShavit\Documents\GitHub\apex-speaker  (2026-05-26)
 
 ## Corpus Check
-- 100 files · ~9,384,976 words
+- 100 files · ~9,385,441 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

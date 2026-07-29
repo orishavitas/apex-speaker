@@ -1,16 +1,6 @@
 # APEX Speaker Design Intelligence — Project Context
 
-> **New session?** Read this file first. It's everything you need to pick up where we left off.
-
----
-
-## What Is This
-
-**APEX** is a multi-agent AI assistant for loudspeaker design, built by Ori.
-
-A speaker designer (professional, with deep domain knowledge) exports their ChatGPT project conversations and ingests them into a personal knowledge base. APEX routes every question to the right specialist agent, pulling relevant context from that knowledge base via pgvector RAG, then answers in real-time with streaming.
-
-**Not a generic chatbot.** Every agent has a deep system prompt tuned to its domain. Every answer is grounded in Ori's actual design history.
+**APEX** is a multi-agent AI assistant for loudspeaker design. Agents are grounded in Ori's personal knowledge base via pgvector RAG.
 
 ---
 
@@ -30,142 +20,52 @@ User Browser
 
 **Stack:** Next.js 16 · AI SDK v6 · Drizzle ORM · Neon PostgreSQL · pgvector · Vercel AI Gateway · shadcn/ui (zinc dark)
 
-**VituixCAD integration (Sprint 1 — feature/vituixcad-sprint-1 branch):**
-- `web/lib/parser/` — fast-xml-parser based .vxp/.vxd/.vxb parser
-- `web/lib/types/speaker-domain.ts` — canonical domain model (SpeakerConfig, Way, LoadingConfig discriminated union)
-- `web/lib/types/speaker-math.ts` — T/S math engine: calcSealedBox, calcPortedBox, calcHornLoading (Sprint 3 — fully implemented)
-- 3 new DB tables: vituixcad_projects, driver_database, design_state
-- 4 new routes: /dashboard/projects, /dashboard/drivers, /dashboard/workspace, /dashboard/projects/[id]
-- 5 new API routes: /api/upload, /api/projects, /api/projects/[id], /api/design-state, /api/drivers
+**Live:** https://web-blue-theta-12.vercel.app — All sprints merged to master, production live.
 
 ---
 
-## Current Status
+## Current Focus — Sprint 4-D candidates
 
-| Phase | Status |
-|-------|--------|
-| Phase 1 — Foundation (Next.js, DB schema, shadcn) | ✅ Complete |
-| Phase 2 — Knowledge Pipeline (ingest, embed, RAG search) | ✅ Complete |
-| Phase 3 — Agent Architecture (7 agents, routing, memory) | ✅ Complete |
-| Phase 4 — UI Dashboard (chat, streaming, domain badges) | ✅ Complete |
-| Phase 5 — Vercel Deployment | ✅ **LIVE** — https://web-blue-theta-12.vercel.app |
-| Sprint 1 — VituixCAD Integration | ✅ Complete (merged to master) |
-| Sprint 2 — Workspace Hardening | ✅ Complete (merged to master) |
-| Sprint 3 — Math Engine + Results UI | ✅ Complete |
-| Wizard Sprint v2 — Fixes + hardening | ✅ **COMPLETE + LIVE** — pushed 2026-04-13, smoke-tested |
-| Knowledge Ingest | ✅ **23/23 files ingested** — 78 chunks, HNSW index live |
-
-All phases + sprints merged into `master`. **Production is live.**
-
----
-
-## Live URLs
-
-- **Production:** https://web-blue-theta-12.vercel.app
-- **Vercel project:** orishavitas-projects/web
-- **Neon DB:** connected via Vercel integration (env vars auto-provisioned)
-
----
-
-## Next Steps
-
-### Sprint 4-C — COMPLETE (2026-04-14)
-- WizardPane: 6 public signals (budget, placement, use_case, sound_sig, room_size, amplifier)
-- Horn dimension persistence: all MonoInput fields wired + persist via useDesignStatePersistence
-- Workspace chat (Col 3): fully wired via useChat + DefaultChatTransport → /api/agents/manager
-
-### Sprint 4-D candidates:
 - Live SPL frequency plot in workspace
 - Driver fuzzy-match: auto-link VXP DRIVER refs to driver_database rows
 - T/S param edit modal (driver DB)
-- Per-message domain badge (FE-4) — needs AI SDK message ID at fetch time
+- Per-message domain badge (FE-4)
 - CSV import endpoint for driver bulk-load
-
-### Phase 6 Wishlist
-- Project memory UI
-- Knowledge search at /knowledge
-- Sources page at /sources
-- New chat button
-- Domain badge animation
-- Theme toggle
-- Rename Vercel project from "web" to "apex-speaker" (cosmetic)
-- Auth / IDOR hardening (SEC-2)
-
----
-
-## Key Files
-
-### Core (Phases 1–4)
-
-| Path | What It Does |
-|------|-------------|
-| `web/app/dashboard/chat/page.tsx` | Main chat UI (AI SDK v6 Chat + DefaultChatTransport) |
-| `web/app/api/agents/manager/route.ts` | Keyword routing → picks specialist domain |
-| `web/app/api/agents/[domain]/route.ts` | Specialist agents with RAG + memory |
-| `web/lib/db/index.ts` | Lazy Neon proxy — defers connection to first request |
-| `web/lib/db/schema.ts` | 9 tables: agents, projects, knowledge_chunks, sources, agent_memory, conversations, vituixcad_projects, driver_database, design_state |
-| `web/lib/agents/system-prompts.ts` | Deep domain prompts for all 8 agents |
-| `web/lib/agents/rag-context.ts` | pgvector cosine search, formatted for injection |
-| `web/scripts/ingest-conversations.ts` | `npm run ingest` — embeds 23 conversation files |
-| `web/scripts/register-notebooklm.ts` | `npm run register-notebooklm` — registers NLM source |
-| `docs/process/phase-5-deployment.md` | Full deployment reference with env vars table |
-
-### Sprint 1 — VituixCAD Integration
-
-| Path | What It Does |
-|------|-------------|
-| `web/lib/parser/vituixcad-parser.ts` | fast-xml-parser v4 — parses .vxp/.vxd/.vxb files, handles single-element isArray edge case |
-| `web/lib/parser/ts-param-mapper.ts` | Maps VituixCAD native names (Re, fs, BL) → canonical unit-suffixed names (Re_ohms, fs_hz, BL_Tm) |
-| `web/lib/types/speaker-domain.ts` | Canonical domain model: ThieleSmallParams, LoadingConfig discriminated union, SpeakerConfig, DesignState, WaySlot |
-| `web/lib/types/speaker-math.ts` | Math stubs: calcSealedBox, calcPortedBox, calcHornLoading — implemented in Sprint 2 |
-| `web/app/api/upload/route.ts` | POST — accepts .vxp/.vxd/.vxb, parses, stores in vituixcad_projects |
-| `web/app/api/projects/route.ts` | GET — lists all VituixCAD projects |
-| `web/app/api/projects/[id]/route.ts` | GET — single project with full parsed data |
-| `web/app/api/design-state/route.ts` | GET + PATCH — workspace design state persistence |
-| `web/app/api/drivers/route.ts` | GET — driver database listing |
-| `web/app/dashboard/projects/page.tsx` | Project list with drag-drop upload, 5-state UX |
-| `web/app/dashboard/projects/[id]/page.tsx` | Single project JSON viewer |
-| `web/app/dashboard/drivers/page.tsx` | Dense sortable driver database table |
-| `web/app/dashboard/workspace/page.tsx` | 3-column CSS Grid: config panel / driver slots / chat |
-| `web/components/apex/top-nav.tsx` | Top navigation bar (Projects, Drivers, Workspace, Chat) with active route detection |
 
 ---
 
 ## Critical Implementation Notes
 
-- **AI SDK v6 breaking changes:** `useChat` now requires `Chat` + `DefaultChatTransport`. Use `sendMessage({text})` not `append`. Response is `UIMessage` with `parts` array — no `content` string.
-- **Lazy DB init:** `neon()` is wrapped in a Proxy to avoid module-eval-time errors during Next.js build when `DATABASE_URL` is absent. Never call `neon()` at module scope.
-- **Graceful degradation:** App works without `DATABASE_URL` — agents answer from system prompts, RAG + memory are silently skipped.
+- **AI SDK v6 breaking changes:** `useChat` requires `Chat` + `DefaultChatTransport`. Use `sendMessage({text})` not `append`. Response is `UIMessage` with `parts` array — no `content` string.
+- **Lazy DB init:** `neon()` is wrapped in a Proxy to avoid module-eval-time errors at build time when `DATABASE_URL` is absent. Never call `neon()` at module scope.
 - **AI Gateway auth:** Uses OIDC (`VERCEL_OIDC_TOKEN`). Run `vercel env pull` after linking — no manual API keys needed.
-- **Embedder uses OpenAI directly:** `lib/knowledge/embedder.ts` uses `openai.embedding('text-embedding-3-small')` via `@ai-sdk/openai` — NOT the AI Gateway. AI Gateway model strings don't work for embeddings without billing activation. `OPENAI_API_KEY` must be in `.env.local` for ingest to run.
-- **Drizzle vector bug:** Drizzle's `vector()` column serializes `number[]` as `{"x","y",...}` (JSON object notation) which pgvector rejects. Workaround: use raw `getNeon()` client with tagged template literal and `::vector(1536)` cast. See `lib/knowledge/upsert.ts`.
-- **Chunk hard-cap:** `lib/knowledge/chunker.ts` enforces `HARD_CAP_CHARS=28000` (~7000 tokens) to prevent exceeding OpenAI's 8192-token embedding limit.
-- **NotebookLM:** No API. Registered in DB as `source_type: 'notebooklm'`. Research agent surfaces it by URL.
-- **Vercel function lifetime:** `onFinish` callbacks (AI SDK streamText) are fire-and-forget. Wrap any DB writes inside `after()` from `next/server` — otherwise they race function teardown and silently drop.
-- **readMemory must filter by key:** `readMemory()` returns any row for the domain sorted by updatedAt. Always `.find(e => e.key === 'wizard_profile')` — never trust `[0]` is your key.
-- **writeMemory upsert:** Use `db.transaction()` or Drizzle `.onConflictDoUpdate()` — bare SELECT+INSERT is not atomic and will fail under concurrent requests.
+- **Embedder uses OpenAI directly:** `lib/knowledge/embedder.ts` uses `openai.embedding('text-embedding-3-small')` — NOT the AI Gateway. `OPENAI_API_KEY` must be in `.env.local` for ingest.
+- **Drizzle vector bug:** Drizzle's `vector()` column serializes as `{"x","y",...}` which pgvector rejects. Workaround: raw `getNeon()` client with tagged template literal + `::vector(1536)` cast. See `lib/knowledge/upsert.ts`.
+- **Chunk hard-cap:** `lib/knowledge/chunker.ts` enforces `HARD_CAP_CHARS=28000` (~7000 tokens) — prevents exceeding OpenAI 8192-token embedding limit.
+- **`onFinish` callbacks:** Wrap any DB writes inside `after()` from `next/server` — otherwise they race Vercel function teardown.
+- **`readMemory` must filter by key:** Always `.find(e => e.key === 'wizard_profile')` — never trust `[0]` is your key.
+- **`writeMemory` upsert:** Use `db.transaction()` or Drizzle `.onConflictDoUpdate()` — bare SELECT+INSERT is not atomic.
 - **Prompt injection guard:** Never inject user-derived strings into system prompts without allowlist validation. All WizardProfile enum fields must match their closed set before `JSON.stringify` injection.
-- **Response header size limit:** HTTP response headers cap at ~8KB via Vercel proxy. Do not use headers as a transport for structured JSON objects. Profile is currently delivered via header (works for small payloads) — long-term fix is a GET /api/agents/design-wizard/profile endpoint.
-- **parseSignalsFromMessages:** Exported from route.ts. 26 Vitest tests in `route.test.ts`. Budget regex requires `$` sign OR explicit budget keyword — bare numbers match unintentionally (documented in tests, not yet fixed).
-- **Wizard fetch routing:** The `DefaultChatTransport` fetch closure in `chat/page.tsx` must pass `api` directly to `globalThis.fetch(api, init)` — do NOT use `url.toString().replace(...)`. In production, `DefaultChatTransport` passes an absolute URL; string replace against a relative path silently fails and the wizard session escapes to manager on turn 2.
-- **Wizard gate:** `profileConfidence()` counts 6 user-provided signals (budget, placement, use_case, sound_signature, room_size, amplifier). `experience_level` is excluded — always auto-inferred, must not inflate the gate. Gate fires at >= 4 of 6.
-- **code-review-swarm plugin:** Registered in `~/.claude/plugins/installed_plugins.json`. Invoke via `Skill("code-review-swarm")`. Runs 5 specialist reviewer agents in parallel, triages, fixes, writes report to `code-review-swarm-report.md`.
+- **Response header size limit:** HTTP response headers cap at ~8KB via Vercel proxy. Do not use headers as a transport for structured JSON objects.
+- **Wizard fetch routing:** The `DefaultChatTransport` fetch closure in `chat/page.tsx` must pass `api` directly to `globalThis.fetch(api, init)` — do NOT use `url.toString().replace(...)`. String replace against a relative path silently fails and the wizard session escapes to manager on turn 2.
+- **Wizard gate:** `profileConfidence()` counts 6 user-provided signals (budget, placement, use_case, sound_signature, room_size, amplifier). `experience_level` is excluded — always auto-inferred. Gate fires at >= 4 of 6.
+- **code-review-swarm plugin:** Invoke via `Skill("code-review-swarm")`. Runs 5 specialist reviewer agents in parallel.
 
 ---
 
 ## Design Language
 
-- Zinc dark (#09090b background)
-- Monospace headings (font-mono)
+- Zinc dark (`#09090b` background)
+- Monospace headings (`font-mono`)
 - APEX symbol: ◈
-- Domain badges: colored pills (acoustics=violet, enclosure=amber, crossover=sky, theory=emerald, mechanical=orange, research=rose, manager=zinc)
+- Domain badges: acoustics=violet, enclosure=amber, crossover=sky, theory=emerald, mechanical=orange, research=rose, manager=zinc
 
 ---
 
 ## NotebookLM
 
-URL: https://notebooklm.google.com/notebook/59cf7942-cf9f-459e-9b3c-46b0702f026c
-Contains: all 23 ingested speaker design conversation exports
+https://notebooklm.google.com/notebook/59cf7942-cf9f-459e-9b3c-46b0702f026c — 23 ingested speaker design conversation exports, 78 chunks, HNSW index live.
+
 ---
 
 ## Nexus Harness

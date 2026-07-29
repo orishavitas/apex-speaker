@@ -1,4 +1,4 @@
-import type { AgentDomain } from "./types";
+import type { AgentDomain } from "@/lib/agents/types";
 
 const BASE_CONTEXT = `
 You are part of APEX — a multi-agent speaker design intelligence platform.
