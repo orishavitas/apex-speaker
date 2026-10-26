@@ -1,0 +1,43 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "◈ APEX" [ref=e4] [cursor=pointer]:
+        - /url: /dashboard/chat
+      - navigation [ref=e5]:
+        - link "Projects" [ref=e6] [cursor=pointer]:
+          - /url: /dashboard/projects
+        - link "Drivers" [ref=e7] [cursor=pointer]:
+          - /url: /dashboard/drivers
+        - link "Workspace" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard/workspace
+        - link "Chat" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard/chat
+    - main [ref=e10]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - heading "APEX Chat" [level=1] [ref=e15]
+            - paragraph [ref=e16]: Project Manager routes to specialists
+          - generic [ref=e17]:
+            - generic [ref=e18]: ACTIVE SPECIALIST
+            - generic [ref=e19]:
+              - generic [ref=e20]: ◈
+              - generic [ref=e21]: Manager
+        - generic [ref=e23]:
+          - generic [ref=e24]: ◈
+          - generic [ref=e25]:
+            - paragraph [ref=e26]: APEX Speaker Design Intelligence
+            - paragraph [ref=e27]: Ask about enclosures, crossovers, acoustics, drivers, or your build.
+          - generic [ref=e28]:
+            - button "Help me design a speaker from scratch →" [ref=e29]
+            - button "Port diameter for 12L at 45Hz?" [ref=e30]
+            - button "RS180 in a sealed vs ported box?" [ref=e31]
+            - button "Linkwitz-Riley vs Butterworth crossover" [ref=e32]
+            - button "Isobaric push-push configuration" [ref=e33]
+            - button "Best waveguide angle for a 1\" tweeter" [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - textbox "Ask the Project Manager…" [ref=e37]
+            - button "Send" [disabled]
+          - paragraph [ref=e38]: Enter to send · Shift+Enter for newline · Routed to manager
+  - alert [ref=e39]

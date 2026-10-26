@@ -1,0 +1,88 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "◈ APEX" [ref=e4] [cursor=pointer]:
+        - /url: /dashboard/chat
+      - navigation [ref=e5]:
+        - link "Projects" [ref=e6] [cursor=pointer]:
+          - /url: /dashboard/projects
+        - link "Drivers" [ref=e7] [cursor=pointer]:
+          - /url: /dashboard/drivers
+        - link "Workspace" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard/workspace
+        - link "Chat" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard/chat
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - generic [ref=e14]:
+              - heading "APEX Chat" [level=1] [ref=e15]
+              - paragraph [ref=e16]: Project Manager routes to specialists
+            - generic [ref=e17]:
+              - generic [ref=e18]: ACTIVE SPECIALIST
+              - generic [ref=e19]:
+                - generic [ref=e20]: ◈
+                - generic [ref=e21]: Wizard
+          - generic [ref=e22]:
+            - paragraph [ref=e42]: Help me design a speaker.
+            - generic [ref=e43]:
+              - generic [ref=e44]:
+                - generic [ref=e45]:
+                  - generic [ref=e46]: ◈
+                  - generic [ref=e47]: Wizard
+                - generic [ref=e48]: APEX
+              - generic [ref=e50]: Tell me about the speaker you want to build — style, size, intended use, room, anything you have in mind.
+            - paragraph [ref=e78]: I want a large floorstanding 3-way speaker with a 10 inch woofer for home theater in a large living room
+            - generic [ref=e95]:
+              - generic [ref=e96]:
+                - generic [ref=e97]:
+                  - generic [ref=e98]: ◈
+                  - generic [ref=e99]: Wizard
+                - generic [ref=e100]: APEX
+              - generic [ref=e102]: That's a great start for a powerful home theater setup. What kind of budget do you have in mind for this project?
+            - paragraph [ref=e105]: around $800 total
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - textbox "Ask the Project Manager…" [disabled] [ref=e37]
+              - button "…" [disabled]
+            - paragraph [ref=e38]: Enter to send · Shift+Enter for newline · Routed to design_wizard
+        - generic [ref=e51]:
+          - generic [ref=e52]: Design Profile
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Profile
+              - generic [ref=e57]:
+                - generic [ref=e58]: BUDGET
+                - generic [ref=e59]: ~$800
+              - generic [ref=e60]:
+                - generic [ref=e61]: PLACEMENT
+                - generic [ref=e62]: floorstanding
+              - generic [ref=e63]:
+                - generic [ref=e64]: USE CASE
+                - generic [ref=e65]: TV/surround
+              - generic [ref=e66]:
+                - generic [ref=e67]: SOUND SIG
+                - generic [ref=e68]: ···
+              - generic [ref=e69]:
+                - generic [ref=e70]: ROOM SIZE
+                - generic [ref=e71]: medium
+              - generic [ref=e72]:
+                - generic [ref=e73]: AMPLIFIER
+                - generic [ref=e74]: ···
+            - generic [ref=e80]:
+              - generic [ref=e81]: Projected Build
+              - generic [ref=e82]:
+                - generic [ref=e83]: 2-way floorstanding
+                - generic [ref=e84]: ~6.5" woofer + 1" dome tweeter
+                - generic [ref=e85]: sealed or small ported
+              - generic [ref=e86]:
+                - generic [ref=e87]: est. f3
+                - generic [ref=e88]: 45–60 Hz
+              - generic [ref=e89]:
+                - generic [ref=e90]: sensitivity
+                - generic [ref=e91]: 86–89 dB
+              - generic [ref=e92]:
+                - generic [ref=e93]: cabinet $
+                - generic [ref=e94]: ~$416
+  - alert [ref=e39]
