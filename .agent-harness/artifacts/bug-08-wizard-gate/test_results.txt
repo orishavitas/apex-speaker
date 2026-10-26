@@ -1,0 +1,10 @@
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+ RUN  v4.1.2 C:/Users/OriShavit/Documents/GitHub/apex-speaker/.claude/worktrees/wf_bc52feb5-977-5/web
+
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  22:55:20
+   Duration  1.13s (transform 114ms, setup 0ms, import 790ms, tests 27ms, environment 0ms)
+
